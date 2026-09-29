@@ -1,0 +1,15 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+backend/dist/
+backend/uploads/
+backend/data/*.db*
+bun.lock

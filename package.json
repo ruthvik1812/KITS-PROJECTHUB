@@ -1,0 +1,24 @@
+{
+  "name": "kits-projecthub",
+  "private": true,
+  "version": "1.0.0",
+  "description": "KITS ProjectHub — College project showcase for Kamala Institute of Technology and Science",
+  "scripts": {
+    "install:all": "cd frontend && npm install && cd ../backend && npm install",
+    "dev": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,magenta\" \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "cd frontend && npm run build && cd ../backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "lint": "cd frontend && npm run lint && cd ../backend && npm run lint",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "clean": "cd frontend && npm run clean && cd ../backend && rm -rf dist",
+    "preview": "cd frontend && npm run preview",
+    "test": "cd backend && npm test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

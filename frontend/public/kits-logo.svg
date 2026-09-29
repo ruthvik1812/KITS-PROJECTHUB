@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 110" width="100%" height="100%" fill="none" role="img" aria-label="Kamala Institute of Technology &amp; Science Logo">
+  <defs>
+    <!-- Kamala Brand Gradient: Deep Royal Blue to Sky Cyan Blue -->
+    <linearGradient id="kamalaTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00457C" />
+      <stop offset="35%" stop-color="#005B9E" />
+      <stop offset="70%" stop-color="#0079C1" />
+      <stop offset="100%" stop-color="#009AD9" />
+    </linearGradient>
+
+    <!-- Lotus Petal Gradients -->
+    <linearGradient id="lotusPink" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F472B6" />
+      <stop offset="60%" stop-color="#E11D48" />
+      <stop offset="100%" stop-color="#BE123C" />
+    </linearGradient>
+    <linearGradient id="lotusCenter" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185" />
+      <stop offset="100%" stop-color="#CA0765" />
+    </linearGradient>
+    <linearGradient id="leafGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#15803D" />
+    </linearGradient>
+
+    <!-- Circular Curved Paths for Seal Text -->
+    <!-- Center of seal is at (55, 52), radius for text path = 38 -->
+    <!-- Top Arc: Sweep clockwise from 205 deg to -25 deg (i.e. left to right over top) -->
+    <path id="topTextArc" d="M 18,60 A 38.5 38.5 0 1,1 92,60" fill="none" />
+    <!-- Bottom Arc: Sweep clockwise from 155 deg to 25 deg (underneath) -->
+    <path id="bottomTextArc" d="M 22,54 A 38.5 38.5 0 0,0 88,54" fill="none" />
+  </defs>
+
+  <!-- ==================== LEFT: INSTITUTIONAL SEAL ==================== -->
+  <g transform="translate(0, 0)">
+    <!-- White Background Disk -->
+    <circle cx="55" cy="52" r="45" fill="#FFFFFF" />
+
+    <!-- Outer Red Seal Border Rings -->
+    <circle cx="55" cy="52" r="44.5" stroke="#B31826" stroke-width="2.2" fill="none" />
+    <circle cx="55" cy="52" r="42" stroke="#B31826" stroke-width="0.8" fill="none" />
+    <circle cx="55" cy="52" r="33.5" stroke="#B31826" stroke-width="1.2" fill="none" />
+    <circle cx="55" cy="52" r="32" stroke="#B31826" stroke-width="0.6" fill="none" />
+
+    <!-- Top Text: KAMALA INSTITUTE OF TECHNOLOGY & SCIENCE -->
+    <text font-family="'Yantramanav', 'Arial Black', sans-serif" font-size="5.4" font-weight="900" fill="#00457C" letter-spacing="0.4px">
+      <textPath href="#topTextArc" startOffset="50%" text-anchor="middle">
+        KAMALA INSTITUTE OF TECHNOLOGY &amp; SCIENCE
+      </textPath>
+    </text>
+
+    <!-- Bottom Text: SINGAPUR, Dist : KARIMNAGAR -->
+    <text font-family="'Roboto', Arial, sans-serif" font-size="5.2" font-weight="800" fill="#00457C" letter-spacing="0.5px">
+      <textPath href="#bottomTextArc" startOffset="50%" text-anchor="middle">
+        SINGAPUR, Dist : KARIMNAGAR
+      </textPath>
+    </text>
+
+    <!-- Inner Elements Group (Center = 55, 52) -->
+    <g transform="translate(55, 52)">
+      <!-- 1. TOP: Desktop Computer & Technology -->
+      <g transform="translate(0, -18)">
+        <!-- Monitor -->
+        <rect x="-7.5" y="-7.5" width="15" height="10.5" rx="0.8" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.9" />
+        <!-- Screen Display -->
+        <rect x="-6" y="-6.2" width="12" height="7.8" rx="0.4" fill="#38BDF8" opacity="0.35" />
+        <line x1="-4" y1="-3" x2="1" y2="-3" stroke="#0284C7" stroke-width="0.6" stroke-linecap="round" />
+        <line x1="-4" y1="-1" x2="4" y2="-1" stroke="#0284C7" stroke-width="0.6" stroke-linecap="round" />
+        <!-- Stand Base -->
+        <path d="M -1.8,3 L 1.8,3 L 2.8,5.2 L -2.8,5.2 Z" fill="#334155" />
+        <line x1="-4.5" y1="5.2" x2="4.5" y2="5.2" stroke="#0F172A" stroke-width="0.8" />
+        <!-- Keyboard & Mouse -->
+        <rect x="-7" y="6.2" width="11" height="2" rx="0.3" fill="#E2E8F0" stroke="#0F172A" stroke-width="0.6" />
+        <rect x="5.2" y="6.2" width="2" height="2.2" rx="0.4" fill="#64748B" />
+        <!-- CPU Mini Tower -->
+        <rect x="8.5" y="-7" width="4.2" height="13" rx="0.5" fill="#E2E8F0" stroke="#0F172A" stroke-width="0.7" />
+        <circle cx="10.6" cy="-4.5" r="0.6" fill="#0284C7" />
+        <line x1="9.5" y1="-1.5" x2="11.7" y2="-1.5" stroke="#64748B" stroke-width="0.5" />
+      </g>
+
+      <!-- 2. LEFT: Satellite Dish (Telecom / Space) -->
+      <g transform="translate(-16, -2)">
+        <!-- Dish Arc -->
+        <path d="M -5,4 A 7 7 0 0 1 2,-5" fill="none" stroke="#0F172A" stroke-width="1.2" stroke-linecap="round" />
+        <!-- Dish Feed Horn -->
+        <line x1="-1.5" y1="-0.5" x2="2.5" y2="2" stroke="#0F172A" stroke-width="0.8" />
+        <circle cx="2.5" cy="2" r="0.7" fill="#CA0765" />
+        <!-- Signal Waves -->
+        <path d="M 4,4 A 3 3 0 0 1 7,1" fill="none" stroke="#0284C7" stroke-width="0.7" />
+        <path d="M 5.5,5.5 A 5 5 0 0 1 9.5,1.5" fill="none" stroke="#0284C7" stroke-width="0.7" />
+        <!-- Stand Base -->
+        <line x1="-1.5" y1="-0.5" x2="-4" y2="6.5" stroke="#334155" stroke-width="1.1" />
+        <line x1="-6.5" y1="6.5" x2="-1.5" y2="6.5" stroke="#0F172A" stroke-width="1.1" />
+      </g>
+
+      <!-- 3. RIGHT: Electrical Power Grid Tower (Electrical & Electronics) -->
+      <g transform="translate(16, -2)">
+        <!-- Pylon Legs -->
+        <line x1="-4.5" y1="7" x2="-1" y2="-7" stroke="#0F172A" stroke-width="0.9" />
+        <line x1="4.5" y1="7" x2="1" y2="-7" stroke="#0F172A" stroke-width="0.9" />
+        <!-- Crossarms -->
+        <line x1="-6" y1="-4" x2="6" y2="-4" stroke="#0F172A" stroke-width="0.9" />
+        <line x1="-4.5" y1="-1" x2="4.5" y2="-1" stroke="#0F172A" stroke-width="0.8" />
+        <line x1="-3.5" y1="3" x2="3.5" y2="3" stroke="#0F172A" stroke-width="0.8" />
+        <!-- Bracing (X) -->
+        <line x1="-3" y1="-4" x2="2" y2="-1" stroke="#475569" stroke-width="0.6" />
+        <line x1="3" y1="-4" x2="-2" y2="-1" stroke="#475569" stroke-width="0.6" />
+        <line x1="-2.5" y1="-1" x2="2.5" y2="3" stroke="#475569" stroke-width="0.6" />
+        <line x1="2.5" y1="-1" x2="-2.5" y2="3" stroke="#475569" stroke-width="0.6" />
+        <!-- Tip -->
+        <line x1="0" y1="-7" x2="0" y2="-8.5" stroke="#0F172A" stroke-width="0.8" />
+      </g>
+
+      <!-- 4. CENTER: Golden Sunburst & Atomic Orbit Rings -->
+      <g transform="translate(0, 1)">
+        <!-- Elliptical Electron Orbits -->
+        <ellipse cx="0" cy="0" rx="9.5" ry="3.8" fill="none" stroke="#D97706" stroke-width="0.75" />
+        <ellipse cx="0" cy="0" rx="9.5" ry="3.8" transform="rotate(60)" fill="none" stroke="#D97706" stroke-width="0.75" />
+        <ellipse cx="0" cy="0" rx="9.5" ry="3.8" transform="rotate(120)" fill="none" stroke="#D97706" stroke-width="0.75" />
+        <!-- Central Radiant Golden Sun / Star -->
+        <circle cx="0" cy="0" r="2.3" fill="#F59E0B" />
+        <!-- 8 Sun Rays -->
+        <g stroke="#D97706" stroke-width="0.7">
+          <line x1="0" y1="-3.6" x2="0" y2="3.6" />
+          <line x1="-3.6" y1="0" x2="3.6" y2="0" />
+          <line x1="-2.5" y1="-2.5" x2="2.5" y2="2.5" />
+          <line x1="-2.5" y1="2.5" x2="2.5" y2="-2.5" />
+        </g>
+        <circle cx="0" cy="0" r="1.4" fill="#FEF08A" />
+      </g>
+
+      <!-- 5. Sanskrit Motto in Devanagari: विद्वान् सर्वत्र पूज्यते -->
+      <text x="0" y="15" text-anchor="middle" font-family="'Yantramanav', 'Noto Sans Devanagari', 'Segoe UI', Arial, sans-serif" font-size="6.8" font-weight="900" fill="#047857" letter-spacing="0.3px">
+        विद्वान् सर्वत्र पूज्यते
+      </text>
+
+      <!-- 6. Establishment Year: Estd : 1997 -->
+      <text x="0" y="22.5" text-anchor="middle" font-family="'Roboto', 'Segoe UI', Arial, sans-serif" font-size="5.2" font-weight="700" fill="#1E293B" letter-spacing="0.6px">
+        Estd : 1997
+      </text>
+    </g>
+
+    <!-- 7. BOTTOM: Green Foliage & Vines around Lower Seal -->
+    <g stroke="url(#leafGreen)" stroke-width="1.3" fill="none" stroke-linecap="round">
+      <!-- Left Vine Swirl -->
+      <path d="M 24,70 C 20,77 24,85 36,92 C 43,95 48,96 52,97" />
+      <!-- Left Leaves -->
+      <path d="M 21,73 Q 18,71 22,68 Q 24,72 21,73 Z" fill="#15803D" stroke="none" />
+      <path d="M 26,80 Q 22,81 25,85 Q 28,83 26,80 Z" fill="#15803D" stroke="none" />
+      <path d="M 33,87 Q 30,90 35,93 Q 37,89 33,87 Z" fill="#15803D" stroke="none" />
+      <path d="M 43,94 Q 42,98 47,97 Q 47,93 43,94 Z" fill="#15803D" stroke="none" />
+
+      <!-- Right Vine Swirl -->
+      <path d="M 86,70 C 90,77 86,85 74,92 C 67,95 62,96 58,97" />
+      <!-- Right Leaves -->
+      <path d="M 89,73 Q 92,71 88,68 Q 86,72 89,73 Z" fill="#15803D" stroke="none" />
+      <path d="M 84,80 Q 88,81 85,85 Q 82,83 84,80 Z" fill="#15803D" stroke="none" />
+      <path d="M 77,87 Q 80,90 75,93 Q 73,89 77,87 Z" fill="#15803D" stroke="none" />
+      <path d="M 67,94 Q 68,98 63,97 Q 63,93 67,94 Z" fill="#15803D" stroke="none" />
+    </g>
+
+    <!-- 8. BOTTOM: Blooming Pink Lotus (Kamala) -->
+    <g transform="translate(55, 94)">
+      <!-- Outer Petals Left & Right -->
+      <path d="M 0,4 C -12,3 -19,-3 -15,-9 C -11,-12 -6,-7 0,-2 Z" fill="url(#lotusPink)" />
+      <path d="M 0,4 C 12,3 19,-3 15,-9 C 11,-12 6,-7 0,-2 Z" fill="url(#lotusPink)" />
+      <!-- Mid Petals -->
+      <path d="M 0,5 C -8,2 -13,-6 -9,-12 C -6,-14 -2,-9 0,-3 Z" fill="url(#lotusCenter)" />
+      <path d="M 0,5 C 8,2 13,-6 9,-12 C 6,-14 2,-9 0,-3 Z" fill="url(#lotusCenter)" />
+      <!-- Center Main Petal -->
+      <path d="M 0,5 C -5,-1 -5,-13 0,-16 C 5,-13 5,-1 0,5 Z" fill="#F43F5E" />
+      <!-- Inner Petal Highlight -->
+      <path d="M 0,4 C -2.5,0 -2.5,-9 0,-12 C 2.5,-9 2.5,0 0,4 Z" fill="#FDA4AF" opacity="0.85" />
+      <!-- Golden Lotus Pericarp / Center -->
+      <circle cx="0" cy="1" r="2.2" fill="#FBBF24" />
+      <circle cx="0" cy="1" r="1.2" fill="#F59E0B" />
+    </g>
+  </g>
+
+  <!-- ==================== RIGHT: LOGO WORDMARK ==================== -->
+  <g transform="translate(122, 0)">
+    <!-- Main Title: KAMALA -->
+    <text x="0" y="65" font-family="'Yantramanav', 'Montserrat', 'Arial Black', sans-serif" font-weight="900" font-size="52" fill="url(#kamalaTextGradient)" letter-spacing="0.5px">
+      KAMALA
+    </text>
+
+    <!-- Subtitle: Institute of Technology & Science -->
+    <text x="3" y="93" font-family="'Roboto', 'Segoe UI', Arial, sans-serif" font-weight="600" font-size="18.5" fill="#00457C" letter-spacing="0.5px">
+      Institute of Technology &amp; Science
+    </text>
+  </g>
+</svg>

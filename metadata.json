@@ -1,0 +1,6 @@
+{
+  "name": "KITS ProjectHub",
+  "description": "Responsive college project showcase for Kamala Institute of Technology and Science. Discover, submit, and review student engineering innovations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

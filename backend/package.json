@@ -1,0 +1,33 @@
+{
+  "name": "kits-projecthub-backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc && node -e \"import('fs').then(fs => { fs.mkdirSync('dist/db', {recursive:true}); fs.copyFileSync('src/db/schema.sql', 'dist/db/schema.sql'); })\"",
+    "lint": "tsc --noEmit",
+    "db:view": "tsx src/db/view_db.ts",
+    "test": "tsx tests/api.test.ts"
+  },
+  "dependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "argon2": "^0.45.1",
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-session": "^1.19.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.19.0",
+    "@types/node": "^22.14.0",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2"
+  }
+}
