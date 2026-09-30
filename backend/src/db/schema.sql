@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS projects (
     status TEXT NOT NULL CHECK (status IN ('draft', 'submitted', 'changes_requested', 'approved', 'rejected', 'archived')),
     version TEXT DEFAULT '1.0.0',
     views_count INTEGER DEFAULT 0,
+    shares_count INTEGER DEFAULT 0,
     likes_count INTEGER DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -111,5 +112,36 @@ CREATE INDEX IF NOT EXISTS idx_projects_group ON projects(official_group_id);
 CREATE INDEX IF NOT EXISTS idx_projects_owner ON projects(owner_user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_submission_type ON projects(submission_type);
 CREATE INDEX IF NOT EXISTS idx_projects_type ON projects(project_type);
+
+-- 6. Project Views (24-hour deduplication tracking)
+CREATE TABLE IF NOT EXISTS project_views (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    viewer_key TEXT NOT NULL,
+    viewed_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_views_proj_viewer ON project_views(project_id, viewer_key);
+CREATE INDEX IF NOT EXISTS idx_views_viewed_at ON project_views(viewed_at);
+
+-- 7. Project Shares (Share-action tracking & rate limiting)
+CREATE TABLE IF NOT EXISTS project_shares (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    sharer_key TEXT NOT NULL,
+    share_type TEXT NOT NULL DEFAULT 'share',
+    shared_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_shares_proj_sharer ON project_shares(project_id, sharer_key);
+
+-- 8. Student Wishlist (Personal bookmarks, private to student, 1 entry per project)
+CREATE TABLE IF NOT EXISTS wishlists (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL,
+    UNIQUE(user_id, project_id)
+);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user ON wishlists(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wishlist_project ON wishlists(project_id);
 
 

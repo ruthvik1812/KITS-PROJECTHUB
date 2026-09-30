@@ -73,10 +73,12 @@ function resetRateLimit(key: string): void {
 
 function formatUserResponse(user: UserProfileRecord) {
   const group = getGroupByUserId(user.id, user.student_roll_number || undefined);
-  let departmentName = 'Engineering';
+  let departmentName = '';
+  let departmentCode = '';
   if (user.department_id) {
-    const dept = db.prepare('SELECT name FROM departments WHERE id = ?').get(user.department_id) as any;
+    const dept = db.prepare('SELECT name, code FROM departments WHERE id = ?').get(user.department_id) as any;
     if (dept?.name) departmentName = dept.name;
+    if (dept?.code) departmentCode = dept.code;
   }
 
   return {
@@ -87,6 +89,7 @@ function formatUserResponse(user: UserProfileRecord) {
     name: user.full_name,
     role: user.role,
     departmentId: user.department_id || 'cse',
+    departmentCode: departmentCode || (user.department_id ? user.department_id.toUpperCase() : 'CSE'),
     departmentName,
     studentRollNumber: user.student_roll_number,
     isVerified: Boolean(user.is_verified),
@@ -295,7 +298,7 @@ router.get('/me', (req: Request, res: Response) => {
   try {
     const user = getUserById(session.userId);
     if (!user) {
-      session.destroy(() => {});
+      session.destroy(() => { });
       res.status(401).json({ error: 'User session invalid. Please sign in again.', user: null });
       return;
     }

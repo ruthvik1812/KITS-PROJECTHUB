@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "build": "tsc && node -e \"import('fs').then(fs => { fs.mkdirSync('dist/db', {recursive:true}); fs.copyFileSync('src/db/schema.sql', 'dist/db/schema.sql'); })\"",
     "lint": "tsc --noEmit",
+    "clean": "node -e \"import('node:fs').then(fs => fs.rmSync('dist', { recursive: true, force: true }))\"",
     "db:view": "tsx src/db/view_db.ts",
     "test": "tsx tests/api.test.ts"
   },

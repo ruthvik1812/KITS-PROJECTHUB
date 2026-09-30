@@ -8,6 +8,8 @@ import generalRoutes from './routes/general.js';
 import authRoutes from './routes/auth.js';
 import ratingsRoutes from './routes/ratings.js';
 import commentsRoutes from './routes/comments.js';
+import wishlistRoutes from './routes/wishlist.js';
+import crypto from 'crypto';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -68,11 +70,29 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use('/uploads', express.static(uploadsDir));
 
+// --- Server-issued anonymous visitor identifier (24h lifespan, zero browser fingerprinting) ---
+app.use((req, res, next) => {
+  let vid = req.cookies?.kits_vid;
+  if (!vid || typeof vid !== 'string' || vid.length < 16) {
+    vid = crypto.randomUUID();
+    res.cookie('kits_vid', vid, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    if (!req.cookies) (req as any).cookies = {};
+    req.cookies.kits_vid = vid;
+  }
+  next();
+});
+
 // --- API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects/:projectId/ratings', ratingsRoutes);
 app.use('/api/projects/:projectId/comments', commentsRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api', generalRoutes);
 

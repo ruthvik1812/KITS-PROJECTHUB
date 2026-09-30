@@ -10,7 +10,9 @@ import {
   getDepartments,
   getAllTechnologies,
   getAllBatches,
-  updateProject
+  updateProject,
+  recordProjectView,
+  recordProjectShare
 } from '../services/projectSqlService.js';
 import { db } from '../db/database.js';
 import { validateGitHubRepoUrl } from '../services/githubValidator.js';
@@ -684,6 +686,46 @@ router.delete('/:id', authenticate, (req: Request, res: Response) => {
     res.json({ message: 'Project deleted successfully.', projectId: project.id });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/projects/:id/view — Track deduplicated view count (24h per viewer)
+router.post('/:id/view', (req: Request, res: Response) => {
+  try {
+    const projectId = req.params.id;
+    const sessionUserId = (req.session as any)?.userId;
+    const viewerKey = sessionUserId ? `user:${sessionUserId}` : `anon:${req.cookies?.kits_vid || req.ip || 'guest'}`;
+
+    const result = recordProjectView(projectId, viewerKey);
+    res.json({
+      success: true,
+      projectId,
+      ...result
+    });
+  } catch (error: any) {
+    const status = error.message?.includes('not found') ? 404 : 500;
+    res.status(status).json({ error: error.message || 'Failed to record view.' });
+  }
+});
+
+// POST /api/projects/:id/share — Track verified share event with rate limiting
+router.post('/:id/share', (req: Request, res: Response) => {
+  try {
+    const projectId = req.params.id;
+    const { shareType } = req.body || {};
+    const sessionUserId = (req.session as any)?.userId;
+    const sharerKey = sessionUserId ? `user:${sessionUserId}` : `anon:${req.cookies?.kits_vid || req.ip || 'guest'}`;
+
+    const result = recordProjectShare(projectId, sharerKey, shareType || 'share');
+    res.json({
+      success: true,
+      projectId,
+      ...result,
+      note: 'Share actions and copied links; recipient delivery is not verified.'
+    });
+  } catch (error: any) {
+    const status = error.message?.includes('not found') ? 404 : 500;
+    res.status(status).json({ error: error.message || 'Failed to record share.' });
   }
 });
 

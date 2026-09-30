@@ -14,7 +14,7 @@
     "lint": "cd frontend && npm run lint && cd ../backend && npm run lint",
     "lint:frontend": "cd frontend && npm run lint",
     "lint:backend": "cd backend && npm run lint",
-    "clean": "cd frontend && npm run clean && cd ../backend && rm -rf dist",
+    "clean": "npm --prefix frontend run clean && npm --prefix backend run clean",
     "preview": "cd frontend && npm run preview",
     "test": "cd backend && npm test"
   },

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAuth } from '../context/AppContext';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { ProjectCard } from '../components/ProjectCard';
 import { Project } from '../types';
@@ -25,6 +25,8 @@ interface ExploreProjectsProps {
   initialSearch?: string;
   onSelectProject: (project: Project) => void;
   onNavigateSubmit: () => void;
+  onNavigateSignIn?: () => void;
+  onNavigateWishlist?: (highlightProjectId?: string) => void;
 }
 
 export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
@@ -32,8 +34,21 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
   initialSearch = '',
   onSelectProject,
   onNavigateSubmit,
+  onNavigateSignIn,
+  onNavigateWishlist,
 }) => {
   const { projects, refreshProjects } = useApp();
+  const { isAuthenticated } = useAuth();
+
+  const handleCardSelect = (project: Project) => {
+    if (!isAuthenticated) {
+      if (onNavigateSignIn) {
+        onNavigateSignIn();
+      }
+      return;
+    }
+    onSelectProject(project);
+  };
 
   useEffect(() => {
     refreshProjects();
@@ -535,7 +550,9 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                   <ProjectCard
                     key={project.id}
                     project={project}
-                    onSelect={onSelectProject}
+                    onSelect={handleCardSelect}
+                    onNavigateSignIn={onNavigateSignIn}
+                    onNavigateWishlist={onNavigateWishlist}
                   />
                 ))}
               </div>

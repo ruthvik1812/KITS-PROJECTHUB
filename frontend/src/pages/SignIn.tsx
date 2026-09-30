@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AppContext';
+import React, { useState, useEffect } from 'react';
+import { useAuth, useApp } from '../context/AppContext';
 import {
   Eye,
   EyeOff,
@@ -11,14 +11,16 @@ import {
   GraduationCap,
   Building,
   KeyRound,
+  Bookmark,
 } from 'lucide-react';
 import { KitsLogo } from '../components/KitsLogo';
 
 interface SignInPageProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, filterParam?: string) => void;
+  onNavigateWishlist?: (highlightProjectId?: string) => void;
 }
 
-export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
+export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate, onNavigateWishlist }) => {
   const {
     currentUser,
     isAuthenticated,
@@ -28,6 +30,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
     setupPassword,
     signOut,
   } = useAuth();
+  const { saveToWishlist } = useApp();
 
   // Mode: 'login' | 'register' | 'setup-password'
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'setup-password'>('login');
@@ -67,6 +70,36 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
     { id: 'civil', name: 'Civil Engineering (CIVIL)' },
   ];
 
+  const checkAndRedirectWishlist = async () => {
+    const pendingId = typeof window !== 'undefined'
+      ? sessionStorage.getItem('kits_pending_wishlist_id')
+      : null;
+
+    if (pendingId) {
+      try {
+        sessionStorage.removeItem('kits_pending_wishlist_id');
+        await saveToWishlist(pendingId);
+        if (onNavigateWishlist) {
+          onNavigateWishlist(pendingId);
+          return true;
+        }
+      } catch (e) {
+        console.warn('Auto-save wishlist failed:', e);
+      }
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      checkAndRedirectWishlist().then((handled) => {
+        if (handled) {
+          // Redirect handled by onNavigateWishlist
+        }
+      });
+    }
+  }, [isAuthenticated, currentUser]);
+
   // Handle Login Submit
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,10 +114,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
 
     try {
       await signIn(loginEmail.trim(), loginPassword);
-      setAuthSuccess('Login successful! Redirecting to student dashboard...');
-      setTimeout(() => {
-        onNavigate('my-group');
-      }, 500);
+      setAuthSuccess('Login successful! Redirecting...');
+      setTimeout(async () => {
+        const handled = await checkAndRedirectWishlist();
+        if (!handled) {
+          onNavigate('my-group');
+        }
+      }, 400);
     } catch (err: any) {
       setAuthError(err.message || 'Invalid email or password.');
     } finally {
@@ -113,9 +149,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
         password: regPassword,
       });
       setAuthSuccess('Registration successful! Opening student dashboard...');
-      setTimeout(() => {
-        onNavigate('my-group');
-      }, 500);
+      setTimeout(async () => {
+        const handled = await checkAndRedirectWishlist();
+        if (!handled) {
+          onNavigate('my-group');
+        }
+      }, 400);
     } catch (err: any) {
       setAuthError(err.message || 'Registration failed. Please check your details.');
     } finally {
@@ -139,9 +178,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
       if (setupPassword) {
         await setupPassword(setupIdentifier.trim(), setupNewPassword);
         setAuthSuccess('Password set successfully! You are now logged in.');
-        setTimeout(() => {
-          onNavigate('my-group');
-        }, 500);
+        setTimeout(async () => {
+          const handled = await checkAndRedirectWishlist();
+          if (!handled) {
+            onNavigate('my-group');
+          }
+        }, 400);
       }
     } catch (err: any) {
       setAuthError(err.message || 'Could not set password.');
@@ -183,7 +225,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Department:</span>
-              <span className="font-semibold text-slate-900">{currentUser.departmentName || 'Engineering'}</span>
+              <span className="font-semibold text-slate-900">{currentUser.departmentName || (currentUser.departmentId ? currentUser.departmentId.toUpperCase() : 'CSE')}</span>
             </div>
           </div>
 
@@ -224,6 +266,16 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate }) => {
 
       {/* Centered White Form Card */}
       <div className="w-full max-w-[440px] bg-white rounded-xl shadow-md border border-slate-200/80 p-6 sm:p-8">
+        {/* Pending Wishlist Notice */}
+        {typeof window !== 'undefined' && sessionStorage.getItem('kits_pending_wishlist_id') && (
+          <div className="mb-5 p-3.5 bg-pink-50 border border-pink-200 rounded-lg text-xs text-[#CA0765] flex items-start gap-2.5 animate-fadeIn">
+            <Bookmark className="w-4 h-4 text-[#CA0765] shrink-0 mt-0.5" />
+            <div className="leading-snug font-medium">
+              Sign in to save this project to your personal Wishlist. It will be added automatically upon successful sign-in.
+            </div>
+          </div>
+        )}
+
         {/* Error Alert */}
         {authError && (
           <div

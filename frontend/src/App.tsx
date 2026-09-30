@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AppProvider, useApp } from './context/AppContext';
+import React, { useState, useEffect } from 'react';
+import { AppProvider, useApp, useAuth } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { BackendReportModal } from './components/BackendReportModal';
@@ -12,15 +12,20 @@ import { MyGroupProject } from './pages/MyGroupProject';
 import { SubmitProject } from './pages/SubmitProject';
 import { SignInPage } from './pages/SignIn';
 import { Project } from './types';
-import { CheckCircle2, Sparkles, X } from 'lucide-react';
+import { CheckCircle2, Sparkles, X, Bookmark } from 'lucide-react';
 
 function AppContent() {
   const { refreshProjects } = useApp();
+  const { isAuthenticated } = useAuth();
   const [activePage, setActivePage] = useState<string>('home');
   const [selectedProject, setSelectedProject] = useState<Project | any | null>(null);
   const [editingProject, setEditingProject] = useState<any | null>(null);
   const [groupForSubmit, setGroupForSubmit] = useState<any | null>(null);
   const [initialDepartment, setInitialDepartment] = useState<string>('');
+
+  // Wishlist and profile tab routing
+  const [profileTab, setProfileTab] = useState<'projects' | 'wishlist'>('projects');
+  const [highlightedProjectId, setHighlightedProjectId] = useState<string | null>(null);
 
   // Modals state
   const [isGuidelinesOpen, setIsGuidelinesOpen] = useState(false);
@@ -29,7 +34,70 @@ function AppContent() {
 
   const [initialSearchQuery, setInitialSearchQuery] = useState<string>('');
 
+  useEffect(() => {
+    const handleUrlSync = () => {
+      const params = new URLSearchParams(window.location.search);
+      const path = window.location.pathname;
+      const tab = params.get('tab');
+      if (path === '/profile' || tab === 'wishlist' || tab === 'projects') {
+        setActivePage('my-projects');
+        if (tab === 'wishlist') {
+          setProfileTab('wishlist');
+        } else {
+          setProfileTab('projects');
+        }
+      }
+    };
+    handleUrlSync();
+    window.addEventListener('popstate', handleUrlSync);
+    return () => window.removeEventListener('popstate', handleUrlSync);
+  }, []);
+
+  const handleNavigateWishlist = (projectId?: string) => {
+    setToastMessage('Project added to your wishlist.');
+    setProfileTab('wishlist');
+    if (projectId) {
+      setHighlightedProjectId(projectId);
+      setTimeout(() => {
+        setHighlightedProjectId(null);
+      }, 4500);
+    }
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.pathname = '/profile';
+      url.searchParams.set('tab', 'wishlist');
+      window.history.pushState(null, '', url.toString());
+    }
+    setActivePage('my-projects');
+    setSelectedProject(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleNavigate = (page: string, filterParam?: string) => {
+    if (page === 'profile' || page === 'my-projects' || page === 'my-group') {
+      if (filterParam === 'tab:wishlist' || filterParam === 'wishlist') {
+        setProfileTab('wishlist');
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.pathname = '/profile';
+          url.searchParams.set('tab', 'wishlist');
+          window.history.pushState(null, '', url.toString());
+        }
+      } else {
+        setProfileTab('projects');
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.pathname = '/profile';
+          url.searchParams.set('tab', 'projects');
+          window.history.pushState(null, '', url.toString());
+        }
+      }
+      setActivePage('my-projects');
+      setSelectedProject(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (filterParam) {
       if (filterParam.startsWith('search:')) {
         setInitialSearchQuery(decodeURIComponent(filterParam.replace('search:', '')));
@@ -52,6 +120,10 @@ function AppContent() {
   };
 
   const handleSelectProject = (project: any) => {
+    if (!isAuthenticated) {
+      handleNavigate('signin');
+      return;
+    }
     setSelectedProject(project);
     setActivePage('details');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -158,6 +230,8 @@ function AppContent() {
             initialSearch={initialSearchQuery}
             onSelectProject={handleSelectProject}
             onNavigateSubmit={() => handleNavigate('submit')}
+            onNavigateSignIn={() => handleNavigate('signin')}
+            onNavigateWishlist={handleNavigateWishlist}
           />
         )}
 
@@ -167,15 +241,19 @@ function AppContent() {
             onBack={() => handleNavigate('explore')}
             onSelectProject={handleSelectProject}
             onEditProject={handleStartEdit}
+            onNavigateSignIn={() => handleNavigate('signin')}
+            onNavigateWishlist={handleNavigateWishlist}
           />
         )}
 
-        {(activePage === 'my-group' || activePage === 'my-projects') && (
+        {(activePage === 'my-group' || activePage === 'my-projects' || (activePage === 'profile' && isAuthenticated)) && (
           <MyGroupProject
             onSelectProject={handleSelectProject}
             onNavigateSubmit={handleStartEdit}
             onNavigateExplore={() => handleNavigate('explore')}
             onNavigateSignIn={() => handleNavigate('signin')}
+            initialTab={profileTab}
+            highlightProjectId={highlightedProjectId}
           />
         )}
 
@@ -189,8 +267,11 @@ function AppContent() {
           />
         )}
 
-        {(activePage === 'signin' || activePage === 'profile') && (
-          <SignInPage onNavigate={handleNavigate} />
+        {(activePage === 'signin' || (activePage === 'profile' && !isAuthenticated)) && (
+          <SignInPage
+            onNavigate={handleNavigate}
+            onNavigateWishlist={handleNavigateWishlist}
+          />
         )}
       </main>
 

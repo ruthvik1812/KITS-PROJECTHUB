@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { useAuth } from '../context/AppContext';
+import React, { useState, useEffect } from 'react';
+import { useAuth, useApp } from '../context/AppContext';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { RatingsAndComments } from '../components/RatingsAndComments';
+import { ShareModal } from '../components/ShareModal';
+import { recordProjectView, recordProjectShare } from '../services/apiClient';
 import {
   ArrowLeft,
   ExternalLink,
@@ -22,7 +24,9 @@ import {
   Download,
   Video,
   Layers,
-  Presentation
+  Presentation,
+  Eye,
+  Bookmark
 } from 'lucide-react';
 
 interface ProjectDetailsProps {
@@ -30,15 +34,109 @@ interface ProjectDetailsProps {
   onBack: () => void;
   onSelectProject?: (p: any) => void;
   onEditProject?: (p: any) => void;
+  onNavigateSignIn?: () => void;
+  onNavigateWishlist?: (highlightProjectId?: string) => void;
 }
 
 export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   project,
   onBack,
   onEditProject,
+  onNavigateSignIn,
+  onNavigateWishlist,
 }) => {
-  const { currentUser } = useAuth();
-  const [copied, setCopied] = useState(false);
+  const { currentUser, isAuthenticated } = useAuth();
+  const { isProjectSaved, saveToWishlist } = useApp();
+  const [viewsCount, setViewsCount] = useState<number>(project.views_count || project.viewsCount || 0);
+  const [sharesCount, setSharesCount] = useState<number>(project.shares_count || project.sharesCount || 0);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSavingWishlist, setIsSavingWishlist] = useState(false);
+  const isSaved = isProjectSaved(project.id);
+
+  // Automatically count view on successful published project details load (deduplicated 24h per viewer)
+  useEffect(() => {
+    if (project?.id) {
+      recordProjectView(project.id)
+        .then((res) => {
+          if (typeof res?.views_count === 'number') {
+            setViewsCount(res.views_count);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [project?.id]);
+
+  const handleWishlistClick = async () => {
+    if (!isAuthenticated) {
+      saveToWishlist(project.id);
+      if (onNavigateSignIn) {
+        onNavigateSignIn();
+      }
+      return;
+    }
+
+    if (isSaved) {
+      if (onNavigateWishlist) {
+        onNavigateWishlist(project.id);
+      }
+      return;
+    }
+
+    setIsSavingWishlist(true);
+    try {
+      await saveToWishlist(project.id);
+      if (onNavigateWishlist) {
+        onNavigateWishlist(project.id);
+      }
+    } catch (err: any) {
+      console.warn('Failed to save to wishlist:', err);
+    } finally {
+      setIsSavingWishlist(false);
+    }
+  };
+
+  const handleShareClick = async () => {
+    const shareUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/?project=${encodeURIComponent(project.id)}`
+      : '';
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: project.title,
+          text: project.summary || 'Check out this engineering capstone on KITS ProjectHub!',
+          url: shareUrl,
+        });
+        recordProjectShare(project.id, 'native')
+          .then((res) => {
+            if (typeof res?.shares_count === 'number') {
+              setSharesCount(res.shares_count);
+            }
+          })
+          .catch(() => {});
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        recordProjectShare(project.id, 'copy_link')
+          .then((res) => {
+            if (typeof res?.shares_count === 'number') {
+              setSharesCount(res.shares_count);
+            }
+          })
+          .catch(() => {});
+        setIsShareModalOpen(true);
+        return;
+      }
+    } catch {}
+
+    setIsShareModalOpen(true);
+  };
 
   const submissionType = project.submission_type || project.submissionType || (project.official_group_id ? 'group' : 'individual');
   const isIndividual = submissionType === 'individual';
@@ -86,12 +184,6 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
       (authors[0]?.role?.toLowerCase().includes('leader') && authors[0]?.rollNumber?.toUpperCase() === (currentUser.studentRollNumber || currentUser.rollNumber)?.toUpperCase())
     );
   }
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const tools = Array.isArray(project.tools)
     ? project.tools
@@ -235,12 +327,40 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               </button>
             )}
 
-            <button
-              onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-bold transition-colors ml-auto"
+            {/* View Count Badge */}
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-[4px] bg-white/10 text-white/90 border border-white/15 text-xs font-semibold"
+              title="Verified views (deduplicated within 24h per viewer)"
             >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Link Copied' : 'Share Project'}</span>
+              <Eye className="w-3.5 h-3.5 text-[#03A9F5]" />
+              <span>{viewsCount} Views</span>
+            </div>
+
+            {/* Save to Wishlist Button */}
+            <button
+              onClick={handleWishlistClick}
+              disabled={isSavingWishlist}
+              aria-label={isSaved ? "Saved in your Wishlist - Click to open Wishlist" : "Save this project to Wishlist"}
+              title={isSaved ? "Saved in your Wishlist - Click to open Wishlist" : "Save to Wishlist"}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                isSaved
+                  ? 'bg-[#CA0765] hover:bg-[#A10550] text-white border border-[#CA0765]'
+                  : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current text-white' : 'text-white'}`} />
+              <span>{isSaved ? 'Saved in Wishlist' : 'Save to Wishlist'}</span>
+            </button>
+
+            {/* Share Project Button */}
+            <button
+              onClick={handleShareClick}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-bold transition-colors ml-auto cursor-pointer"
+              title="Shares: Share actions and copied links; recipient delivery is not verified."
+              aria-label={`Share ${project.title} (${sharesCount} shares)`}
+            >
+              <Share2 className="w-3.5 h-3.5 text-[#03A9F5]" />
+              <span>Shares ({sharesCount})</span>
             </button>
           </div>
         </div>
@@ -538,6 +658,13 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           </div>
         </div>
       </div>
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        project={project}
+        onShareRecorded={(newCount) => setSharesCount(newCount)}
+      />
     </div>
   );
 };

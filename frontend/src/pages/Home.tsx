@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useApp } from '../context/AppContext';
+import { useApp, useAuth } from '../context/AppContext';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import {
   Search,
@@ -29,6 +29,7 @@ export const Home: React.FC<HomeProps> = ({
   onOpenGuidelines,
 }) => {
   const { projects, refreshProjects } = useApp();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     refreshProjects();
@@ -70,6 +71,10 @@ export const Home: React.FC<HomeProps> = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      onNavigate('signin');
+      return;
+    }
     const query = heroSearch.trim();
     if (!query) return;
     onNavigate('explore', `search:${encodeURIComponent(query)}`);
@@ -155,9 +160,15 @@ export const Home: React.FC<HomeProps> = ({
               )}
               <button
                 type="submit"
-                disabled={!heroSearch.trim()}
+                onClick={(e) => {
+                  if (!isAuthenticated) {
+                    e.preventDefault();
+                    onNavigate('signin');
+                  }
+                }}
+                disabled={isAuthenticated && !heroSearch.trim()}
                 className={`px-5 py-2.5 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all shrink-0 shadow-sm ${
-                  !heroSearch.trim()
+                  isAuthenticated && !heroSearch.trim()
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/60'
                     : 'bg-[#CA0765] hover:bg-[#A10550] text-white cursor-pointer hover:shadow'
                 }`}
@@ -177,7 +188,13 @@ export const Home: React.FC<HomeProps> = ({
               </button>
 
               <button
-                onClick={() => onNavigate('submit')}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    onNavigate('signin');
+                  } else {
+                    onNavigate('submit');
+                  }
+                }}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-white hover:bg-slate-100 text-[#19232B] border-2 border-white text-[15px] font-semibold tracking-wide transition-all shadow-md"
               >
                 <PlusCircle className="w-4 h-4 text-[#CA0765]" />
@@ -297,7 +314,13 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           <button
-            onClick={() => onNavigate('explore')}
+            onClick={() => {
+              if (!isAuthenticated) {
+                onNavigate('signin');
+              } else {
+                onNavigate('explore');
+              }
+            }}
             className="text-xs font-bold text-[#0070C2] hover:text-[#005696] hover:underline flex items-center gap-1"
           >
             <span>Explore All</span>
@@ -312,10 +335,24 @@ export const Home: React.FC<HomeProps> = ({
             return (
               <div
                 key={dept.id}
-                onClick={() => onNavigate('explore', dept.id)}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    onNavigate('signin');
+                  } else {
+                    onNavigate('explore', dept.id);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && onNavigate('explore', dept.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (!isAuthenticated) {
+                      onNavigate('signin');
+                    } else {
+                      onNavigate('explore', dept.id);
+                    }
+                  }
+                }}
                 className="kits-card group cursor-pointer flex flex-col justify-between focus-visible:ring-2 focus-visible:ring-[#CA0765]"
               >
                 <span className="kits-cyan-corner-tl" />
@@ -421,7 +458,13 @@ export const Home: React.FC<HomeProps> = ({
 
           <div className="mt-8 text-center flex flex-wrap items-center justify-center gap-3">
             <button
-              onClick={() => onNavigate('submit')}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  onNavigate('signin');
+                } else {
+                  onNavigate('submit');
+                }
+              }}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md focus-visible:ring-2 focus-visible:ring-[#0070C2]"
             >
               <span>Submit Project Now</span>

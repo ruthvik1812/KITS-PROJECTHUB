@@ -357,3 +357,62 @@ export async function deleteComment(
     { method: 'DELETE' }
   );
 }
+
+// ─── Views & Shares Tracking API ──────────────────────────────────────────────
+
+export async function recordProjectView(
+  projectId: string
+): Promise<{ success: boolean; counted: boolean; views_count: number }> {
+  return request<{ success: boolean; counted: boolean; views_count: number }>(
+    `/projects/${encodeURIComponent(projectId)}/view`,
+    { method: 'POST' }
+  );
+}
+
+export async function recordProjectShare(
+  projectId: string,
+  shareType: string = 'share'
+): Promise<{ success: boolean; counted: boolean; shares_count: number }> {
+  return request<{ success: boolean; counted: boolean; shares_count: number }>(
+    `/projects/${encodeURIComponent(projectId)}/share`,
+    { method: 'POST', body: JSON.stringify({ shareType }) }
+  );
+}
+
+// ─── Wishlist API ─────────────────────────────────────────────────────────────
+
+export interface WishlistItem {
+  id: string;
+  wishlistId: string;
+  projectId: string;
+  savedAt: string;
+  isUnavailable?: boolean;
+  [key: string]: any;
+}
+
+export async function fetchMyWishlist(): Promise<{ success: boolean; count: number; items: any[] }> {
+  return request<{ success: boolean; count: number; items: any[] }>('/wishlist');
+}
+
+export async function fetchWishlistIds(): Promise<{ success: boolean; projectIds: string[] }> {
+  return request<{ success: boolean; projectIds: string[] }>('/wishlist/ids');
+}
+
+export async function addToWishlist(
+  projectId: string
+): Promise<{ success: boolean; alreadySaved: boolean; message: string }> {
+  return request<{ success: boolean; alreadySaved: boolean; message: string }>(
+    `/wishlist/${encodeURIComponent(projectId)}`,
+    { method: 'POST' }
+  );
+}
+
+export async function removeFromWishlist(
+  projectId: string
+): Promise<{ success: boolean; message: string }> {
+  return request<{ success: boolean; message: string }>(
+    `/wishlist/${encodeURIComponent(projectId)}`,
+    { method: 'DELETE' }
+  );
+}
+

@@ -18,6 +18,9 @@ import {
   quickLogin,
   verifyStudentRollNumber as apiVerifyRoll,
   fetchProjects as apiFetchProjects,
+  fetchWishlistIds,
+  addToWishlist as apiAddToWishlist,
+  removeFromWishlist as apiRemoveFromWishlist,
 } from '../services/apiClient';
 
 export interface AuthContextType {
@@ -57,6 +60,13 @@ export interface AppContextType extends AuthContextType {
   projects: Project[];
   refreshProjects: () => Promise<void>;
   isFirestoreConnected: boolean;
+  wishlistIds: string[];
+  isProjectSaved: (projectId: string) => boolean;
+  saveToWishlist: (projectId: string) => Promise<{ success: boolean; alreadySaved?: boolean; message?: string }>;
+  removeWishlist: (projectId: string) => Promise<{ success: boolean; message?: string }>;
+  refreshWishlist: () => Promise<void>;
+  pendingWishlistId: string | null;
+  setPendingWishlistId: (id: string | null) => void;
   addProject: (
     newProj: Omit<Project, 'id' | 'submittedAt' | 'updatedAt' | 'viewsCount' | 'likesCount'>,
     privateData: {
@@ -200,8 +210,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             description: p.summary,
             problemStatement: p.problem_statement || p.problemStatement,
             problem_statement: p.problem_statement || p.problemStatement,
-            departmentId: p.department_id || 'cse',
-            departmentName: p.department_name || 'Engineering',
+            departmentId: p.department_id || p.departmentId || 'cse',
+            departmentName: (p.department_name && p.department_name !== 'Engineering') ? p.department_name : (p.departmentName && p.departmentName !== 'Engineering' ? p.departmentName : ''),
+            departmentCode: p.department_code || p.departmentCode || (p.department_id ? p.department_id.toUpperCase() : 'CSE'),
             graduationYear: parseInt((p.academic_year || '2027').split('-')[0], 10) + 1,
             academicYear: p.academic_year || '2026-2027',
             academic_year: p.academic_year || '2026-2027',
@@ -242,8 +253,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             status: p.status || 'approved',
             submittedAt: p.created_at || new Date().toISOString(),
             updatedAt: p.updated_at || new Date().toISOString(),
-            viewsCount: p.views_count || 120,
-            likesCount: p.likes_count || 24,
+            viewsCount: typeof p.views_count === 'number' ? p.views_count : (p.viewsCount || 0),
+            views_count: typeof p.views_count === 'number' ? p.views_count : (p.viewsCount || 0),
+            sharesCount: typeof p.shares_count === 'number' ? p.shares_count : (p.sharesCount || 0),
+            shares_count: typeof p.shares_count === 'number' ? p.shares_count : (p.sharesCount || 0),
+            likesCount: p.likes_count || 0,
             averageRating: p.averageRating || 0,
             totalRatings: p.totalRatings || 0,
           };
@@ -259,6 +273,89 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     refreshProjects();
   }, []);
+
+  // ─── Student Wishlist State & Methods ───
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
+  const [pendingWishlistId, setPendingWishlistIdState] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem('kits_pending_wishlist_id');
+    } catch {
+      return null;
+    }
+  });
+
+  const setPendingWishlistId = (id: string | null) => {
+    setPendingWishlistIdState(id);
+    try {
+      if (id) {
+        sessionStorage.setItem('kits_pending_wishlist_id', id);
+      } else {
+        sessionStorage.removeItem('kits_pending_wishlist_id');
+      }
+    } catch {}
+  };
+
+  const refreshWishlist = async () => {
+    if (!isAuthenticated) {
+      setWishlistIds([]);
+      return;
+    }
+    try {
+      const res = await fetchWishlistIds();
+      if (res?.projectIds) {
+        setWishlistIds(res.projectIds);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh wishlist IDs:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshWishlist();
+      // Handle pending save on login
+      if (pendingWishlistId) {
+        const targetId = pendingWishlistId;
+        setPendingWishlistId(null);
+        apiAddToWishlist(targetId)
+          .then(() => {
+            refreshWishlist();
+          })
+          .catch((err) => console.warn('Failed to complete pending wishlist save:', err));
+      }
+    } else {
+      setWishlistIds([]);
+    }
+  }, [isAuthenticated]);
+
+  const isProjectSaved = (projectId: string) => {
+    return wishlistIds.includes(projectId);
+  };
+
+  const saveToWishlist = async (projectId: string) => {
+    if (!isAuthenticated) {
+      setPendingWishlistId(projectId);
+      return { success: false, message: 'Please sign in to save this project.' };
+    }
+    try {
+      const res = await apiAddToWishlist(projectId);
+      setWishlistIds((prev) => (prev.includes(projectId) ? prev : [...prev, projectId]));
+      return res;
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  const removeWishlist = async (projectId: string) => {
+    if (!isAuthenticated) return { success: false };
+    try {
+      const res = await apiRemoveFromWishlist(projectId);
+      setWishlistIds((prev) => prev.filter((id) => id !== projectId));
+      return res;
+    } catch (err: any) {
+      throw err;
+    }
+  };
 
   // Sign In with Email and Password
   const signIn = async (email: string, password: string) => {
@@ -336,6 +433,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     setCurrentUser(defaultAnonymousUser);
     setIsAuthenticated(false);
+    setWishlistIds([]);
   };
 
   // Refresh current user from backend
@@ -703,6 +801,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchPrivateProjectData,
       getProjectById,
 
+      // Wishlist System
+      wishlistIds,
+      isProjectSaved,
+      saveToWishlist,
+      removeWishlist,
+      refreshWishlist,
+      pendingWishlistId,
+      setPendingWishlistId,
+
       // Project-based Learning & Practice System
       learnerPractices,
       enrolInProject,
@@ -732,6 +839,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       allUsers,
       projects,
       isFirestoreConnected,
+      wishlistIds,
+      pendingWishlistId,
       learnerPractices,
       pathProgress,
       isBackendReportOpen,

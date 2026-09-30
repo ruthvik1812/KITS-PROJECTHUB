@@ -93,8 +93,14 @@ export function initDatabase() {
       if (!projCols.includes('screenshots')) {
         db.exec('ALTER TABLE projects ADD COLUMN screenshots TEXT');
       }
+      if (!projCols.includes('views_count')) {
+        db.exec('ALTER TABLE projects ADD COLUMN views_count INTEGER DEFAULT 0');
+      }
+      if (!projCols.includes('shares_count')) {
+        db.exec('ALTER TABLE projects ADD COLUMN shares_count INTEGER DEFAULT 0');
+      }
     }
-    // --- Comments & Ratings tables ---
+    // --- Comments, Ratings, Views, Shares & Wishlist tables ---
     db.exec(`
       CREATE TABLE IF NOT EXISTS project_ratings (
         id TEXT PRIMARY KEY,
@@ -119,6 +125,34 @@ export function initDatabase() {
       );
       CREATE INDEX IF NOT EXISTS idx_comments_project ON project_comments(project_id);
       CREATE INDEX IF NOT EXISTS idx_comments_user ON project_comments(user_id);
+
+      CREATE TABLE IF NOT EXISTS project_views (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        viewer_key TEXT NOT NULL,
+        viewed_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_views_proj_viewer ON project_views(project_id, viewer_key);
+      CREATE INDEX IF NOT EXISTS idx_views_viewed_at ON project_views(viewed_at);
+
+      CREATE TABLE IF NOT EXISTS project_shares (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        sharer_key TEXT NOT NULL,
+        share_type TEXT NOT NULL DEFAULT 'share',
+        shared_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_shares_proj_sharer ON project_shares(project_id, sharer_key);
+
+      CREATE TABLE IF NOT EXISTS wishlists (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        UNIQUE(user_id, project_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_wishlist_user ON wishlists(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_wishlist_project ON wishlists(project_id);
     `);
   } catch (migErr) {
     console.warn('Pre-migration check note:', migErr);

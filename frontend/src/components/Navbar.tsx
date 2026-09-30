@@ -14,7 +14,8 @@ import {
   FolderGit2,
   LogIn,
   LogOut,
-  User
+  User,
+  Bookmark
 } from 'lucide-react';
 import { KitsLogo } from './KitsLogo';
 
@@ -33,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenHelp,
   onOpenContact,
 }) => {
-  const { projects } = useApp();
+  const { projects, wishlistIds } = useApp();
   const {
     currentUser,
     isAuthenticated,
@@ -200,7 +201,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {kitsCollegeConfig.departments.map((dept) => (
                     <button
                       key={dept.id}
-                      onClick={() => handleNav('explore', dept.id)}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          handleNav('signin');
+                        } else {
+                          handleNav('explore', dept.id);
+                        }
+                      }}
                       className="w-full text-left px-3 py-2 text-xs font-medium text-white hover:bg-white/15 flex items-center justify-between transition-colors"
                       role="menuitem"
                     >
@@ -265,7 +272,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Create / Edit Project Action Button */}
             <button
-              onClick={() => handleNav('submit')}
+              onClick={() => {
+                if (!isAuthenticated) {
+                  handleNav('signin');
+                } else {
+                  handleNav('submit');
+                }
+              }}
               className="ml-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-[14px] font-semibold tracking-wide shadow-sm hover:shadow transition-all active:scale-98"
             >
               <PlusCircle className="w-4 h-4" />
@@ -327,7 +340,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                     <div className="py-1">
                       <button
-                        onClick={() => handleNav('my-group')}
+                        onClick={() => handleNav('my-group', 'tab:projects')}
                         className="w-full text-left px-3 py-2 text-xs font-medium text-white hover:bg-white/15 flex items-center justify-between transition-colors"
                       >
                         <span className="flex items-center gap-2">
@@ -337,6 +350,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {myProjectsCount > 0 && (
                           <span className="px-1.5 py-0.2 text-[10px] bg-white text-[#0070C2] font-bold rounded">
                             {myProjectsCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleNav('my-group', 'tab:wishlist')}
+                        className="w-full text-left px-3 py-2 text-xs font-medium text-white hover:bg-white/15 flex items-center justify-between transition-colors"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Bookmark className="w-3.5 h-3.5" />
+                          Personal Wishlist
+                        </span>
+                        {wishlistIds.length > 0 && (
+                          <span className="px-1.5 py-0.2 text-[10px] bg-pink-100 text-[#CA0765] font-bold rounded">
+                            {wishlistIds.length}
                           </span>
                         )}
                       </button>
@@ -417,13 +445,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
-              onClick={() => handleNav('my-group')}
+              onClick={() => handleNav('my-group', 'tab:projects')}
               className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between ${
                 (activePage === 'my-group' || activePage === 'my-projects') ? 'bg-[#0070C2] text-white' : 'text-[#19232B]'
               }`}
             >
               <span>My Projects</span>
             </button>
+
+            {isAuthenticated && (
+              <button
+                onClick={() => handleNav('my-group', 'tab:wishlist')}
+                className="w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between text-[#CA0765] hover:bg-pink-50"
+              >
+                <span className="flex items-center gap-2">
+                  <Bookmark className="w-4 h-4" />
+                  <span>Personal Wishlist</span>
+                </span>
+                {wishlistIds.length > 0 && (
+                  <span className="px-1.5 py-0.5 text-xs bg-[#CA0765] text-white font-bold rounded-full">
+                    {wishlistIds.length}
+                  </span>
+                )}
+              </button>
+            )}
 
             {isAuthenticated ? (
               <div className="pt-2 border-t border-slate-300 space-y-2">

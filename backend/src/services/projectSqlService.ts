@@ -1,4 +1,5 @@
 import { db } from '../db/database.js';
+import crypto from 'crypto';
 
 export interface ProjectFilters {
   search?: string;
@@ -353,6 +354,13 @@ export function formatProjectRecord(row: any) {
     averageRating = totalRatings > 0 ? Math.round((agg?.avg || 0) * 10) / 10 : 0;
   } catch { /* table may not exist yet on first boot */ }
 
+  let deptInfo: any = null;
+  if (row.department_id) {
+    try {
+      deptInfo = db.prepare(`SELECT id, code, name, short_name FROM departments WHERE id = ?`).get(row.department_id);
+    } catch {}
+  }
+
   const submissionType = row.submission_type || (row.official_group_id ? 'group' : 'individual');
 
   return {
@@ -365,6 +373,11 @@ export function formatProjectRecord(row: any) {
     video_url: row.video_url || null,
     videoUrl: row.video_url || null,
     group: groupDetails,
+    department_name: deptInfo?.name || null,
+    department_code: deptInfo?.code || (row.department_id ? row.department_id.toUpperCase() : null),
+    department_short_name: deptInfo?.short_name || deptInfo?.code || null,
+    departmentName: deptInfo?.name || null,
+    departmentCode: deptInfo?.code || (row.department_id ? row.department_id.toUpperCase() : null),
     project_type: row.project_type || (submissionType === 'individual' ? 'Individual Project' : 'Group Capstone Project'),
     projectType: row.project_type || (submissionType === 'individual' ? 'Individual Project' : 'Group Capstone Project'),
     faculty_mentor_name: submissionType === 'individual' ? (row.faculty_mentor_name || null) : (row.faculty_mentor_name || 'Dr. M. Ravindra Babu'),
@@ -387,6 +400,10 @@ export function formatProjectRecord(row: any) {
     hardware_evidence: parseJsonSafe(row.hardware_evidence, null),
     averageRating,
     totalRatings,
+    views_count: row.views_count || 0,
+    viewsCount: row.views_count || 0,
+    shares_count: row.shares_count || 0,
+    sharesCount: row.shares_count || 0,
     uploader_display_name: uploaderDisplayName,
     uploader_name: uploaderDisplayName,
     uploaderName: uploaderDisplayName,
@@ -404,6 +421,117 @@ function parseJsonSafe(str: any, fallback: any) {
   } catch {
     return fallback;
   }
+}
+
+/**
+ * Records a deduplicated view for a published project.
+ * Deduplication rule: At most one view per viewer_key per project within 24 hours.
+ * Viewer key: 'user:<id>' for signed-in students, or 'anon:<visitor_id>' for guests.
+ * Only published projects (status = 'approved') count views.
+ */
+export function recordProjectView(projectId: string, viewerKey: string) {
+  const project = db.prepare(`SELECT id, status, views_count FROM projects WHERE id = ?`).get(projectId) as any;
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  // Only approved/published projects accumulate views
+  if (project.status !== 'approved') {
+    return { counted: false, views_count: project.views_count || 0 };
+  }
+
+  // Check 24-hour window
+  const recentView = db.prepare(`
+    SELECT id, viewed_at 
+    FROM project_views 
+    WHERE project_id = ? AND viewer_key = ? 
+    ORDER BY viewed_at DESC LIMIT 1
+  `).get(projectId, viewerKey) as any;
+
+  if (recentView) {
+    const elapsed = Date.now() - new Date(recentView.viewed_at).getTime();
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    if (elapsed < twentyFourHours) {
+      // Deduplicated within 24 hours — do not increment
+      return { counted: false, views_count: project.views_count || 0 };
+    }
+  }
+
+  // Insert view log and increment count atomically
+  const viewId = `vw-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const now = new Date().toISOString();
+
+  const tx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO project_views (id, project_id, viewer_key, viewed_at)
+      VALUES (?, ?, ?, ?)
+    `).run(viewId, projectId, viewerKey, now);
+
+    db.prepare(`
+      UPDATE projects 
+      SET views_count = COALESCE(views_count, 0) + 1 
+      WHERE id = ?
+    `).run(projectId);
+
+    const updated = db.prepare(`SELECT views_count FROM projects WHERE id = ?`).get(projectId) as any;
+    return updated?.views_count || 1;
+  });
+
+  const newViewsCount = tx();
+  return { counted: true, views_count: newViewsCount };
+}
+
+/**
+ * Records a share-action event for a published project.
+ * Deduplicates repeated clicks from the same viewer within a short cooldown (30s)
+ * to prevent inflating counts via rapid repeated clicks.
+ */
+export function recordProjectShare(projectId: string, sharerKey: string, shareType: string = 'share') {
+  const project = db.prepare(`SELECT id, status, shares_count FROM projects WHERE id = ?`).get(projectId) as any;
+  if (!project) {
+    throw new Error('Project not found');
+  }
+
+  if (project.status !== 'approved') {
+    return { counted: false, shares_count: project.shares_count || 0 };
+  }
+
+  // Rate-limiting check: 30 seconds cooldown per sharer on the same project
+  const recentShare = db.prepare(`
+    SELECT id, shared_at 
+    FROM project_shares 
+    WHERE project_id = ? AND sharer_key = ? 
+    ORDER BY shared_at DESC LIMIT 1
+  `).get(projectId, sharerKey) as any;
+
+  if (recentShare) {
+    const elapsed = Date.now() - new Date(recentShare.shared_at).getTime();
+    if (elapsed < 30 * 1000) {
+      return { counted: false, shares_count: project.shares_count || 0 };
+    }
+  }
+
+  const shareId = `sh-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const now = new Date().toISOString();
+
+  const tx = db.transaction(() => {
+    db.prepare(`
+      INSERT INTO project_shares (id, project_id, sharer_key, share_type, shared_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(shareId, projectId, sharerKey, shareType, now);
+
+    db.prepare(`
+      UPDATE projects 
+      SET shares_count = COALESCE(shares_count, 0) + 1 
+      WHERE id = ?
+    `).run(projectId);
+
+    const updated = db.prepare(`SELECT shares_count FROM projects WHERE id = ?`).get(projectId) as any;
+    return updated?.shares_count || 1;
+  });
+
+  const newSharesCount = tx();
+  return { counted: true, shares_count: newSharesCount };
 }
 
 
