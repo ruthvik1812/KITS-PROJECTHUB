@@ -417,92 +417,94 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-          <div className="flex items-center gap-2.5">
-            {liveDemo && (
-              <a
-                href={liveDemo}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
-                title="Open Live Prototype Demo"
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span>Demo</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            )}
+        {/* Resource Links Row */}
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 pt-2 border-t border-slate-100 text-xs">
+          {liveDemo && (
+            <a
+              href={liveDemo}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
+              title="Open Live Prototype Demo"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Demo</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          )}
 
-            {documentation && (
-              <a
-                href={documentation}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
-                title="View Technical Documentation / Report"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Docs</span>
-                <ExternalLink className="w-2.5 h-2.5" />
-              </a>
-            )}
+          {documentation && (
+            <a
+              href={documentation}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
+              title="View Technical Documentation / Report"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Docs</span>
+              <ExternalLink className="w-2.5 h-2.5" />
+            </a>
+          )}
 
-            {video && (
-              <a
-                href={video}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 hover:text-purple-800 hover:underline"
-                title="Watch Demonstration Video"
-              >
-                <Video className="w-3.5 h-3.5" />
-                <span>Video</span>
-              </a>
-            )}
+          {video && (
+            <a
+              href={video}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 font-semibold text-purple-600 hover:text-purple-800 hover:underline"
+              title="Watch Demonstration Video"
+            >
+              <Video className="w-3.5 h-3.5" />
+              <span>Video</span>
+            </a>
+          )}
 
-            {presentation && (
-              <a
-                href={presentation}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#D83B01] hover:text-[#B33000] hover:underline"
-                title="View PowerPoint Presentation / Slides"
-              >
-                <Presentation className="w-3.5 h-3.5" />
-                <span>PPT</span>
-              </a>
-            )}
+          {presentation && (
+            <a
+              href={presentation}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 font-semibold text-[#D83B01] hover:text-[#B33000] hover:underline"
+              title="View PowerPoint Presentation / Slides"
+            >
+              <Presentation className="w-3.5 h-3.5" />
+              <span>PPT</span>
+            </a>
+          )}
 
-            {!liveDemo && !documentation && !video && !presentation && repo && (
-              <a
-                href={repo}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#19232B] hover:text-[#CA0765] hover:underline"
-                title="View GitHub Source Code"
-              >
-                <Github className="w-3.5 h-3.5" />
-                <span>Code</span>
-              </a>
-            )}
+          {repo && (
+            <a
+              href={repo}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1 font-semibold text-[#19232B] hover:text-[#CA0765] hover:underline"
+              title="View Source Code Repository"
+            >
+              <Github className="w-3.5 h-3.5" />
+              <span>Code</span>
+            </a>
+          )}
 
-            {!liveDemo && !documentation && !video && !presentation && !repo && (
-              <span className="text-[11px] text-[#757F95] italic">Institutional Repository</span>
-            )}
-          </div>
+          {!liveDemo && !documentation && !video && !presentation && !repo && (
+            <span className="text-[11px] text-[#757F95] italic">Institutional Repository Record</span>
+          )}
+        </div>
 
+        {/* Dedicated "View Project" Button Row (Placed below resource links) */}
+        <div className="pt-2.5 border-t border-slate-100">
           <button
             type="button"
             onClick={handleCardClick}
-            className="inline-flex items-center gap-1 text-xs font-bold text-[#CA0765] hover:text-[#A10550] group-hover:underline ml-auto cursor-pointer"
+            className="w-full py-2 px-3 rounded-[4px] bg-[#CA0765]/5 hover:bg-[#CA0765] text-[#CA0765] hover:text-white border border-[#CA0765]/25 hover:border-[#CA0765] text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-2xs group-hover:bg-[#CA0765] group-hover:text-white group-hover:border-[#CA0765] cursor-pointer"
           >
             <span>View Project</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
         </div>
       </div>
