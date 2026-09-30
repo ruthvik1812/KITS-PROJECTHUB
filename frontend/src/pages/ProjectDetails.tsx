@@ -16,14 +16,11 @@ import {
   Building2,
   CheckCircle2,
   Share2,
-  Check,
   Edit3,
   FileText,
   ShieldCheck,
-  Award,
   Download,
   Video,
-  Layers,
   Presentation,
   Eye,
   Bookmark
@@ -406,7 +403,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   {(project.problemStatement || project.problem_statement) && (
                     <div className="p-4 bg-[#F6F6F7] border-l-4 border-[#CA0765] rounded-[4px] space-y-1">
                       <div className="font-bold text-xs text-[#CA0765] uppercase">
-                        Problem Statement &amp; Motivation
+                        Problem Statement 
                       </div>
                       <p className="text-xs text-[#19232B] leading-relaxed">
                         {project.problemStatement || project.problem_statement}
