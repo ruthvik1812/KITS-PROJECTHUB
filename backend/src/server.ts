@@ -50,7 +50,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-app.use(cookieParser());
+app.use(cookieParser() as any);
 app.use(
   session({
     name: 'kits_session',
@@ -63,7 +63,7 @@ app.use(
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
-  })
+  }) as any
 );
 
 app.use(express.json({ limit: '25mb' }));

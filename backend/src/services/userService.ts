@@ -1,6 +1,6 @@
 import { db } from '../db/database.js';
 import { randomUUID } from 'crypto';
-import argon2 from 'argon2';
+import { hash, verify } from '@node-rs/argon2';
 
 export interface UserProfileRecord {
   id: string;
@@ -30,9 +30,8 @@ export const VALID_BRANCHES = ['cse', 'aiml', 'ece', 'eee', 'me', 'it'];
  * Hashes plaintext password using Argon2id
  */
 export async function hashPassword(password: string): Promise<string> {
-  return argon2.hash(password, {
-    type: argon2.argon2id,
-    memoryCost: 2 ** 16, // 64 MB
+  return hash(password, {
+    memoryCost: 65536, // 64 MB
     timeCost: 3,
     parallelism: 1,
   });
@@ -41,9 +40,9 @@ export async function hashPassword(password: string): Promise<string> {
 /**
  * Verifies plaintext password against Argon2id hash
  */
-export async function verifyPassword(hash: string, password: string): Promise<boolean> {
+export async function verifyPassword(passwordHash: string, password: string): Promise<boolean> {
   try {
-    return await argon2.verify(hash, password);
+    return await verify(passwordHash, password);
   } catch (err) {
     return false;
   }
