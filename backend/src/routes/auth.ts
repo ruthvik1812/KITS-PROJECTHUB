@@ -291,7 +291,7 @@ router.get('/me', (req: Request, res: Response) => {
   const session = req.session as any;
 
   if (!session || !session.userId) {
-    res.status(401).json({ error: 'Not authenticated', user: null });
+    res.json(null);
     return;
   }
 
@@ -299,7 +299,7 @@ router.get('/me', (req: Request, res: Response) => {
     const user = getUserById(session.userId);
     if (!user) {
       session.destroy(() => { });
-      res.status(401).json({ error: 'User session invalid. Please sign in again.', user: null });
+      res.json(null);
       return;
     }
 

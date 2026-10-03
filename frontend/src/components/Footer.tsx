@@ -1,6 +1,7 @@
 import React from 'react';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { KitsLogo } from './KitsLogo';
+import { useAuth } from '../context/AppContext';
 import {
   GraduationCap,
   ArrowUp,
@@ -21,8 +22,42 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenGuidelines,
   onOpenHelp,
 }) => {
+  const { isAuthenticated } = useAuth();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDepartmentClick = (deptId: string) => {
+    if (!isAuthenticated) {
+      onNavigate('signin');
+    } else {
+      onNavigate('explore', deptId);
+    }
+  };
+
+  const handleExploreClick = () => {
+    if (!isAuthenticated) {
+      onNavigate('signin');
+    } else {
+      onNavigate('explore');
+    }
+  };
+
+  const handleSubmitClick = () => {
+    if (!isAuthenticated) {
+      onNavigate('signin');
+    } else {
+      onNavigate('submit');
+    }
+  };
+
+  const handleMyProjectsClick = () => {
+    if (!isAuthenticated) {
+      onNavigate('signin');
+    } else {
+      onNavigate('my-group');
+    }
   };
 
   return (
@@ -58,8 +93,8 @@ export const Footer: React.FC<FooterProps> = ({
               {kitsCollegeConfig.departments.slice(0, 6).map((dept) => (
                 <li key={dept.id}>
                   <button
-                    onClick={() => onNavigate('explore', dept.id)}
-                    className="hover:underline flex items-center gap-1.5 text-left hover:text-white transition-colors"
+                    onClick={() => handleDepartmentClick(dept.id)}
+                    className="hover:underline flex items-center gap-1.5 text-left hover:text-white transition-colors cursor-pointer"
                   >
                     <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                     <span>{dept.name}</span>
@@ -68,8 +103,8 @@ export const Footer: React.FC<FooterProps> = ({
               ))}
               <li>
                 <button
-                  onClick={() => onNavigate('explore')}
-                  className="text-[12px] font-bold text-white underline hover:text-white/80 pt-1 block"
+                  onClick={handleExploreClick}
+                  className="text-[12px] font-bold text-white underline hover:text-white/80 pt-1 block cursor-pointer"
                 >
                   View All 8 Departments →
                 </button>
@@ -86,7 +121,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={() => onNavigate('home')}
-                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"
+                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                   <span>ProjectHub Home</span>
@@ -94,8 +129,8 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('explore')}
-                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"
+                  onClick={handleExploreClick}
+                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                   <span>Explore Project Catalogue</span>
@@ -103,8 +138,8 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('submit')}
-                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"
+                  onClick={handleSubmitClick}
+                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                   <span>Submit New Project</span>
@@ -113,7 +148,7 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   onClick={onOpenGuidelines}
-                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"
+                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                   <span>Submission Guidelines</span>
@@ -121,8 +156,8 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('my-group')}
-                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"
+                  onClick={handleMyProjectsClick}
+                  className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                 >
                   <ChevronRight className="w-3.5 h-3.5 text-white/60" />
                   <span>My Projects</span>

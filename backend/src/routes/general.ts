@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
-import { db } from '../db/database.js';
+import { db, clearAllData, store } from '../db/database.js';
 
 const router = Router();
 
@@ -84,6 +84,53 @@ router.get('/health', (_req: Request, res: Response) => {
     service: 'kits-projecthub-backend',
     authType: 'Database Sessions (SQLite) / HttpOnly Cookies',
     timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * POST /api/database/clear
+ * Clears all records from every table in the database
+ */
+router.post(['/database/clear', '/admin/clear-database'], (_req: Request, res: Response) => {
+  try {
+    clearAllData();
+    res.json({
+      success: true,
+      message: 'All data in the database has been completely removed.',
+      counts: {
+        departments: store.departments.length,
+        users: store.users.length,
+        projects: store.projects.length,
+        official_groups: store.official_groups.length,
+        official_group_members: store.official_group_members.length,
+        project_ratings: store.project_ratings.length,
+        project_comments: store.project_comments.length,
+        wishlists: store.wishlists.length,
+        project_views: store.project_views.length,
+        project_shares: store.project_shares.length,
+      }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to clear database.' });
+  }
+});
+
+/**
+ * GET /api/database/status
+ * Returns record counts for all database tables
+ */
+router.get('/database/status', (_req: Request, res: Response) => {
+  res.json({
+    departments: store.departments.length,
+    users: store.users.length,
+    projects: store.projects.length,
+    official_groups: store.official_groups.length,
+    official_group_members: store.official_group_members.length,
+    project_ratings: store.project_ratings.length,
+    project_comments: store.project_comments.length,
+    wishlists: store.wishlists.length,
+    project_views: store.project_views.length,
+    project_shares: store.project_shares.length,
   });
 });
 

@@ -151,8 +151,28 @@ export const store = {
   project_shares: [] as ShareRow[],
 };
 
-// Seed initial records
+// Clears all data from every table
+export function clearAllData() {
+  store.departments = [];
+  store.users = [];
+  store.projects = [];
+  store.official_groups = [];
+  store.official_group_members = [];
+  store.project_ratings = [];
+  store.project_comments = [];
+  store.wishlists = [];
+  store.project_views = [];
+  store.project_shares = [];
+}
+
+// Initial database setup - starts completely empty with 0 records
 export function seedInitialData() {
+  clearAllData();
+  console.log('✓ Database initialized clean with 0 records across all tables.');
+}
+
+// Optional helper to populate sample data if requested in the future
+export function populateSampleData() {
   if (store.departments.length === 0) {
     store.departments = [
       { id: 'aiml', code: 'CSM', name: 'Artificial Intelligence and Machine Learning', short_name: 'AI & ML', description: 'Deep learning, neural vision, and intelligent cyber-physical systems.', hod_name: 'Dr. S. Ramesh Kumar', hod_email: 's.ramesh@kitsts.ac.in', labs_count: 5 },
@@ -161,168 +181,6 @@ export function seedInitialData() {
       { id: 'eee', code: 'EEE', name: 'Electrical and Electronics Engineering', short_name: 'EEE', description: 'Renewable energy microgrids, EV powertrains and high-voltage simulation.', hod_name: 'Dr. C. Venkatesh', hod_email: 'c.venkatesh@kitsts.ac.in', labs_count: 4 },
       { id: 'me', code: 'ME', name: 'Mechanical Engineering', short_name: 'ME', description: 'Robotics chassis, additive manufacturing, thermofluids and CAD/CAM.', hod_name: 'Dr. K. Sridhar', hod_email: 'k.sridhar@kitsts.ac.in', labs_count: 6 },
       { id: 'it', code: 'IT', name: 'Information Technology', short_name: 'IT', description: 'Cybersecurity, fullstack engineering, database systems and mobile networks.', hod_name: 'Dr. T. Senthil Murugan', hod_email: 't.senthil@kitsts.ac.in', labs_count: 4 }
-    ];
-  }
-
-  if (store.users.length === 0) {
-    const now = new Date().toISOString();
-    store.users = [
-      { id: 'usr-student-01', email: 'student.demo@kitsts.ac.in', full_name: 'A. Rahul', role: 'student', department_id: 'cse', student_roll_number: '21B91A0501', is_verified: 1, section: 'CSE-A', year_semester: 'IV Year I Semester', mobile: '9876543201', father_name: 'Sample Parent', father_mobile: '9876543200', parent_email: 'parent.sample@example.com', present_address: 'KITS Campus, Singapur, Huzurabad', dob: '2003-01-01', created_at: now, updated_at: now },
-      { id: 'usr-student-02', email: 'student2@kitsts.ac.in', full_name: 'Student Member 1', role: 'student', department_id: 'aiml', student_roll_number: '21B91A0502', is_verified: 1, section: 'CSM-A', year_semester: 'IV Year I Semester', mobile: '9876543202', father_name: '', father_mobile: '', parent_email: '', present_address: 'KITS Campus', dob: '2003-05-12', created_at: now, updated_at: now },
-      { id: 'usr-student-03', email: 'student3@kitsts.ac.in', full_name: 'Student Member 2', role: 'student', department_id: 'me', student_roll_number: '21B91A0503', is_verified: 1, section: 'ME-A', year_semester: 'IV Year I Semester', mobile: '9876543203', father_name: '', father_mobile: '', parent_email: '', present_address: 'KITS Campus', dob: '2003-08-20', created_at: now, updated_at: now },
-      { id: 'usr-student-04', email: 'student4@kitsts.ac.in', full_name: 'Student Member 3', role: 'student', department_id: 'cse', student_roll_number: '21B91A0504', is_verified: 1, section: 'CSE-A', year_semester: 'IV Year I Semester', mobile: '9876543204', father_name: '', father_mobile: '', parent_email: '', present_address: 'KITS Campus', dob: '2003-11-15', created_at: now, updated_at: now },
-      { id: 'usr-faculty-01', email: 's.ramesh@kitsts.ac.in', full_name: 'Dr. S. Ramesh Kumar', role: 'reviewer', department_id: 'aiml', student_roll_number: null, is_verified: 1, section: 'Faculty', year_semester: 'Professor', mobile: '9876543213', father_name: '', father_mobile: '', parent_email: '', present_address: 'KITS Campus', dob: '1980-01-01', created_at: now, updated_at: now },
-      { id: 'usr-admin-01', email: 'admin.portal@kitsts.ac.in', full_name: 'KITS Academic Dean (Admin)', role: 'admin', department_id: 'cse', student_roll_number: null, is_verified: 1, section: 'Admin', year_semester: 'Dean', mobile: '9876543214', father_name: '', father_mobile: '', parent_email: '', present_address: 'KITS Campus', dob: '1975-01-01', created_at: now, updated_at: now }
-    ];
-  }
-
-  if (store.official_groups.length === 0) {
-    const now = new Date().toISOString();
-    store.official_groups = [
-      { id: 'grp-kits-001', name: 'Smart Campus IoT Innovations Team', leader_id: 'usr-student-01', department_id: 'cse', academic_year: '2026-2027', status: 'confirmed', created_at: now, updated_at: now }
-    ];
-
-    store.official_group_members = [
-      { id: 'mem-1', group_id: 'grp-kits-001', user_id: 'usr-student-01', student_roll_number: '21B91A0501', invite_status: 'accepted', joined_at: now, created_at: now },
-      { id: 'mem-2', group_id: 'grp-kits-001', user_id: 'usr-student-02', student_roll_number: '21B91A0502', invite_status: 'accepted', joined_at: now, created_at: now },
-      { id: 'mem-3', group_id: 'grp-kits-001', user_id: 'usr-student-03', student_roll_number: '21B91A0503', invite_status: 'accepted', joined_at: now, created_at: now },
-      { id: 'mem-4', group_id: 'grp-kits-001', user_id: 'usr-student-04', student_roll_number: '21B91A0504', invite_status: 'accepted', joined_at: now, created_at: now }
-    ];
-  }
-
-  if (store.projects.length === 0) {
-    const now = new Date().toISOString();
-    store.projects = [
-      {
-        id: 'proj-kits-001',
-        submission_type: 'group',
-        owner_user_id: 'usr-student-01',
-        official_group_id: 'grp-kits-001',
-        title: 'Smart Grid IoT Microgrid Energy Optimizer',
-        summary: 'An intelligent energy management microgrid system designed for campus power distribution, using edge machine learning to dynamically balance solar inverter loads with real-time grid telemetry.',
-        problem_statement: 'Engineering campuses face escalating peak-demand electricity tariffs and inefficient renewable solar utilization due to lack of automated phase load balancing across departmental blocks.',
-        subject: 'IoT & Smart Grid Systems',
-        project_type: 'Major Capstone Project',
-        difficulty: 'Advanced',
-        duration: '6 Months',
-        language: 'English',
-        equipment: 'ESP32 Microcontrollers, Current Transformers (CT sensors), Relay Bank, Web Browser',
-        free_tools_route: 'Fully achievable with ESPHome, Mosquitto MQTT, Node.js and open-source dashboards',
-        live_demo_url: 'https://smartgrid-kits.web.app',
-        repo_url: 'https://github.com/kits-college/smart-grid-microgrid',
-        documentation_url: 'https://github.com/kits-college/smart-grid-microgrid/blob/main/docs/Report.pdf',
-        video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        presentation_url: 'https://slides.google.com/presentation/d/sample-smartgrid',
-        screenshots: JSON.stringify(['/kits-hero-bg.jpg']),
-        faculty_mentor_name: 'Dr. M. Ravindra Babu',
-        faculty_mentor_role: 'Professor & HOD · CSE',
-        hardware_evidence: JSON.stringify({ isHardware: true, details: 'ESP32 Wi-Fi Node with SCT-013 CT sensors connected to 3-phase AC distribution board.' }),
-        outcomes: JSON.stringify(['28% reduction in peak-hour campus grid consumption', 'Sub-second anomaly alert notification via MQTT', 'Automated phase switching for solar inverter feeds']),
-        prerequisites: JSON.stringify(['Basics of Microcontrollers (ESP32 / Arduino)', 'Basic Networking & MQTT Protocol', 'Python or TypeScript for dashboard']),
-        tools: JSON.stringify(['IoT', 'Python', 'React', 'Embedded C', 'MQTT', 'TensorFlow Lite']),
-        original_authors: JSON.stringify([
-          { name: 'A. Rahul', role: 'Team Leader & ML Lead', department: 'CSE', rollNumber: '21B91A0501', contribution: 'Designed edge ML model and MQTT broker architecture' },
-          { name: 'Student Member 1', role: 'Full Stack Dev', department: 'AI & ML', rollNumber: '21B91A0502', contribution: 'Developed React telemetry charts and REST endpoints' },
-          { name: 'Student Member 2', role: 'Firmware Dev', department: 'ME', rollNumber: '21B91A0503', contribution: 'Engineered sensor chassis & relay enclosures' },
-          { name: 'Student Member 3', role: 'IoT Systems', department: 'CSE', rollNumber: '21B91A0504', contribution: 'Implemented ESP32 current monitoring circuits' }
-        ]),
-        department_id: 'cse',
-        academic_year: '2026-2027',
-        licence: 'MIT Open Source License',
-        content_owner: 'A. Rahul',
-        status: 'approved',
-        version: '1.0.0',
-        views_count: 142,
-        shares_count: 36,
-        likes_count: 28,
-        created_at: now,
-        updated_at: now
-      },
-      {
-        id: 'proj-kits-002',
-        submission_type: 'group',
-        owner_user_id: 'usr-student-02',
-        official_group_id: null,
-        title: 'Autonomous Agricultural Weed Detection and Precision Spraying Drone',
-        summary: 'A deep-learning powered autonomous quadcopter platform utilizing fine-tuned YOLOv8 neural vision for real-time crop disease classification and precision weed mitigation.',
-        problem_statement: 'Indiscriminate herbicide application in farming causes excessive chemical runoff, high financial overhead for farmers, and environmental degradation.',
-        subject: 'Deep Learning & Robotics',
-        project_type: 'Major Capstone Project',
-        difficulty: 'Advanced',
-        duration: '5 Months',
-        language: 'English',
-        equipment: 'Quadcopter Frame, Raspberry Pi 4, Pixhawk 4 Autopilot, Downward Camera',
-        free_tools_route: 'Dataset annotated with Roboflow, model trained on Google Colab free tier, ROS2 simulation in Gazebo',
-        live_demo_url: 'https://agridrone-kits.web.app',
-        repo_url: 'https://github.com/kits-college/agri-drone-vision',
-        documentation_url: 'https://github.com/kits-college/agri-drone-vision/blob/main/docs/Thesis.pdf',
-        video_url: 'https://www.youtube.com/watch?v=sample-video-drone',
-        presentation_url: 'https://slides.google.com/presentation/d/sample-agridrone',
-        screenshots: JSON.stringify(['/kits-hero-bg.jpg']),
-        faculty_mentor_name: 'Dr. S. Ramesh Kumar',
-        faculty_mentor_role: 'Professor & HOD · AI&ML',
-        hardware_evidence: JSON.stringify({ isHardware: true, details: 'Pixhawk 4 flight controller connected to Raspberry Pi 4 via MAVLink.' }),
-        outcomes: JSON.stringify(['94.2% mean average precision in weed detection across varying lighting', '65% reduction in herbicide volume applied per acre', 'Autonomous GPS waypoint navigation with obstacle avoidance']),
-        prerequisites: JSON.stringify(['Python programming', 'Convolutional Neural Networks', 'ROS2 Basics']),
-        tools: JSON.stringify(['Computer Vision', 'YOLOv8', 'PyTorch', 'ROS2', 'Raspberry Pi', 'OpenCV']),
-        original_authors: JSON.stringify([
-          { name: 'Student Member 1', role: 'AI Lead', department: 'AI & ML', rollNumber: '21B91A0502', contribution: 'Trained and quantized YOLOv8 crop models' },
-          { name: 'A. Rahul', role: 'Flight System Engineer', department: 'CSE', rollNumber: '21B91A0501', contribution: 'Configured MAVLink telemetry and ROS2 node' }
-        ]),
-        department_id: 'aiml',
-        academic_year: '2026-2027',
-        licence: 'MIT Open Source License',
-        content_owner: 'Student Member 1',
-        status: 'approved',
-        version: '1.0.0',
-        views_count: 218,
-        shares_count: 54,
-        likes_count: 42,
-        created_at: now,
-        updated_at: now
-      },
-      {
-        id: 'proj-kits-003',
-        submission_type: 'individual',
-        owner_user_id: 'usr-student-01',
-        official_group_id: null,
-        title: 'Ultra-Low Power LoRaWAN Environmental Telemetry Node',
-        summary: 'Solar-harvesting decentralized sensor telemetry node measuring AQI, ambient particulate matter, humidity, and soil moisture over a 15km line-of-sight radius.',
-        problem_statement: 'Rural agro-climatic stations lack cellular connectivity and power infrastructure, hindering timely crop weather predictions.',
-        subject: 'Embedded Systems & Wireless Sensor Networks',
-        project_type: 'Individual Project',
-        difficulty: 'Intermediate',
-        duration: '4 Months',
-        language: 'English',
-        equipment: 'STM32L0 microcontroller, SX1276 LoRa transceiver, BME280 sensor, 2W Solar Cell',
-        free_tools_route: 'Open source KiCAD schematic and The Things Network free community tier',
-        live_demo_url: 'https://lorawan-kits.web.app',
-        repo_url: 'https://github.com/kits-college/lorawan-weather-telemetry',
-        documentation_url: 'https://github.com/kits-college/lorawan-weather-telemetry/blob/main/docs/Report.pdf',
-        video_url: '',
-        presentation_url: '',
-        screenshots: JSON.stringify(['/kits-hero-bg.jpg']),
-        faculty_mentor_name: null,
-        faculty_mentor_role: null,
-        hardware_evidence: JSON.stringify({ isHardware: true, details: 'Custom 2-layer PCB fabricated with sleep mode power consumption under 15 microamps.' }),
-        outcomes: JSON.stringify(['Over 18 months continuous battery operation without external power', 'Reliable 14.8km packet transmission to campus gateway', 'Instant real-time telemetry streaming to open database']),
-        prerequisites: JSON.stringify(['C Programming', 'KiCad PCB Schematic Design', 'SPI/I2C communication protocols']),
-        tools: JSON.stringify(['LoRaWAN', 'STM32', 'Embedded C', 'KiCAD', 'PCB Design']),
-        original_authors: JSON.stringify([
-          { name: 'A. Rahul', role: 'Individual Researcher', department: 'CSE', rollNumber: '21B91A0501', contribution: 'Designed firmware, power profiling, and LoRa gateway integration' }
-        ]),
-        department_id: 'ece',
-        academic_year: '2026-2027',
-        licence: 'MIT Open Source License',
-        content_owner: 'A. Rahul',
-        status: 'approved',
-        version: '1.0.0',
-        views_count: 95,
-        shares_count: 18,
-        likes_count: 15,
-        created_at: now,
-        updated_at: now
-      }
     ];
   }
 }
@@ -360,6 +218,19 @@ export const db: any = {
         // Table check for migrations
         if (upper.includes('SQLITE_MASTER')) {
           return { name: 'users' };
+        }
+
+        // Departments queries
+        if (upper.includes('FROM DEPARTMENTS')) {
+          if (upper.includes('WHERE ID = ?')) {
+            const id = p[0];
+            return store.departments.find(d => d.id === id) || null;
+          }
+          if (upper.includes('WHERE CODE = ?')) {
+            const code = String(p[0] || '').toUpperCase();
+            return store.departments.find(d => d.code.toUpperCase() === code) || null;
+          }
+          return store.departments[0] || null;
         }
 
         // Users queries
