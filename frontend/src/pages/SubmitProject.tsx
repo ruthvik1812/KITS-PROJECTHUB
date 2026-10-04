@@ -77,9 +77,9 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
   const [problemStatement, setProblemStatement] = useState(
     editingProject?.problem_statement || editingProject?.problemStatement || ''
   );
-  const [subject, setSubject] = useState(editingProject?.subject || 'Artificial Intelligence & Machine Learning');
+  const [subject, setSubject] = useState(editingProject?.subject || '');
   const [departmentId, setDepartmentId] = useState(
-    editingProject?.department_id || defaultGroup?.department_id || currentUser.departmentId || 'cse'
+    editingProject?.department_id || defaultGroup?.department_id || currentUser.departmentId || ''
   );
   const [projectClassification, setProjectClassification] = useState<string>(
     editingProject?.project_type || editingProject?.projectType || (initialSubmissionType === 'individual' ? 'Individual Project' : 'Major Capstone Project')
@@ -778,7 +778,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
               <input
                 type="text"
                 required
-                placeholder="e.g. Autonomous Weed Detection & Precision Herbicide Micro-Spraying Rover"
+                placeholder=""
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className={`w-full px-3.5 py-2.5 text-xs font-medium border rounded-[4px] focus:outline-none focus:border-[#CA0765] ${errors.title ? 'border-rose-500' : 'border-[#D5D5D5]'
@@ -796,7 +796,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="e.g. AI & Robotics, Cloud Computing"
+                  placeholder=""
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] bg-white focus:outline-none focus:border-[#CA0765]"
@@ -917,11 +917,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       setCardImageMode('plain');
                       setProjectCardImage('');
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${
-                      cardImageMode === 'plain'
-                        ? 'bg-[#19232B] text-white shadow-xs'
-                        : 'text-[#757F95] hover:text-[#19232B]'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${cardImageMode === 'plain'
+                      ? 'bg-[#19232B] text-white shadow-xs'
+                      : 'text-[#757F95] hover:text-[#19232B]'
+                      }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>Plain Card</span>
@@ -929,11 +928,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <button
                     type="button"
                     onClick={() => setCardImageMode('upload')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${
-                      cardImageMode === 'upload'
-                        ? 'bg-[#CA0765] text-white shadow-xs'
-                        : 'text-[#757F95] hover:text-[#19232B]'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${cardImageMode === 'upload'
+                      ? 'bg-[#CA0765] text-white shadow-xs'
+                      : 'text-[#757F95] hover:text-[#19232B]'
+                      }`}
                   >
                     <UploadCloud className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
@@ -941,11 +939,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <button
                     type="button"
                     onClick={() => setCardImageMode('url')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${
-                      cardImageMode === 'url'
-                        ? 'bg-[#0070C2] text-white shadow-xs'
-                        : 'text-[#757F95] hover:text-[#19232B]'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${cardImageMode === 'url'
+                      ? 'bg-[#0070C2] text-white shadow-xs'
+                      : 'text-[#757F95] hover:text-[#19232B]'
+                      }`}
                   >
                     <Link2 className="w-3.5 h-3.5" />
                     <span>Image URL</span>
@@ -1059,18 +1056,16 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       <button
                         type="button"
                         onClick={() => setCardPreviewTab('full')}
-                        className={`px-2 py-0.5 font-bold rounded-[2px] transition-all ${
-                          cardPreviewTab === 'full' ? 'bg-white text-[#19232B] shadow-2xs' : 'text-[#757F95]'
-                        }`}
+                        className={`px-2 py-0.5 font-bold rounded-[2px] transition-all ${cardPreviewTab === 'full' ? 'bg-white text-[#19232B] shadow-2xs' : 'text-[#757F95]'
+                          }`}
                       >
                         Full Card
                       </button>
                       <button
                         type="button"
                         onClick={() => setCardPreviewTab('banner')}
-                        className={`px-2 py-0.5 font-bold rounded-[2px] transition-all ${
-                          cardPreviewTab === 'banner' ? 'bg-white text-[#19232B] shadow-2xs' : 'text-[#757F95]'
-                        }`}
+                        className={`px-2 py-0.5 font-bold rounded-[2px] transition-all ${cardPreviewTab === 'banner' ? 'bg-white text-[#19232B] shadow-2xs' : 'text-[#757F95]'
+                          }`}
                       >
                         Banner Only
                       </button>
@@ -1109,7 +1104,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                           averageRating: 0,
                           totalRatings: 0,
                         }}
-                        onSelect={() => {}}
+                        onSelect={() => { }}
                       />
                     </div>
                   ) : (
@@ -1211,13 +1206,12 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       }
                     }
                   }}
-                  className={`w-full px-3 py-2 text-xs border rounded-[4px] focus:outline-none transition-colors font-mono ${
-                    errors.repoUrl
-                      ? 'border-rose-500 bg-rose-50/20 focus:border-rose-600'
-                      : gitHubCheck && gitHubCheck.valid
+                  className={`w-full px-3 py-2 text-xs border rounded-[4px] focus:outline-none transition-colors font-mono ${errors.repoUrl
+                    ? 'border-rose-500 bg-rose-50/20 focus:border-rose-600'
+                    : gitHubCheck && gitHubCheck.valid
                       ? 'border-emerald-500 bg-emerald-50/10 focus:border-emerald-600'
                       : 'border-[#D5D5D5] focus:border-[#CA0765]'
-                  }`}
+                    }`}
                 />
                 {errors.repoUrl ? (
                   <p className="text-[11px] text-rose-600 font-semibold flex items-center gap-1 mt-0.5">
@@ -1229,11 +1223,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                     <Info className="w-3 h-3 shrink-0 text-amber-600" />
                     <span>{gitHubCheck.error}</span>
                   </p>
-                ) : (
-                  <p className="text-[10px] text-[#757F95] mt-0.5">
-                    Must be a project repo (e.g. <span className="font-mono text-slate-700">https://github.com/user/repo</span>)
-                  </p>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-1">
@@ -1271,11 +1261,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
             </div>
 
             {/* PowerPoint Presentation Upload / Web Link Section */}
-            <div className={`p-4 rounded-[6px] space-y-3 border transition-colors ${
-              submissionType === 'group'
-                ? 'bg-amber-50/50 border-amber-300 shadow-2xs'
-                : 'bg-slate-50/70 border-[#D5D5D5]'
-            }`}>
+            <div className={`p-4 rounded-[6px] space-y-3 border transition-colors ${submissionType === 'group'
+              ? 'bg-amber-50/50 border-amber-300 shadow-2xs'
+              : 'bg-slate-50/70 border-[#D5D5D5]'
+              }`}>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] pb-2.5">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1304,11 +1293,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <button
                     type="button"
                     onClick={() => setPresentationInputMode('url')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${
-                      presentationInputMode === 'url'
-                        ? 'bg-[#D83B01] text-white shadow-xs'
-                        : 'text-[#757F95] hover:text-[#19232B]'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${presentationInputMode === 'url'
+                      ? 'bg-[#D83B01] text-white shadow-xs'
+                      : 'text-[#757F95] hover:text-[#19232B]'
+                      }`}
                   >
                     <Link2 className="w-3.5 h-3.5" />
                     <span>Web URL</span>
@@ -1316,11 +1304,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <button
                     type="button"
                     onClick={() => setPresentationInputMode('upload')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${
-                      presentationInputMode === 'upload'
-                        ? 'bg-[#CA0765] text-white shadow-xs'
-                        : 'text-[#757F95] hover:text-[#19232B]'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[3px] text-xs font-bold transition-all ${presentationInputMode === 'upload'
+                      ? 'bg-[#CA0765] text-white shadow-xs'
+                      : 'text-[#757F95] hover:text-[#19232B]'
+                      }`}
                   >
                     <UploadCloud className="w-3.5 h-3.5" />
                     <span>Upload PPT / PPTX</span>
