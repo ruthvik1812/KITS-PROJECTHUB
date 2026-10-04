@@ -1282,11 +1282,6 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#757F95] mt-0.5">
-                    {submissionType === 'group'
-                      ? 'Essential for Group Projects: Provide your group capstone presentation link (Google Slides, Microsoft PowerPoint Online, Canva, OneDrive) or upload your PPT/PPTX file for faculty review.'
-                      : 'Optional for Individual Projects: You can optionally attach your project PowerPoint presentation (.pptx / .ppt), Google Slides, or Canva link if available (not required).'}
-                  </p>
                 </div>
 
                 <div className="inline-flex rounded-[4px] border border-[#D5D5D5] bg-white p-0.5 shadow-2xs">
@@ -1444,11 +1439,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-[#757F95] mt-0.5">
-                    {submissionType === 'individual'
-                      ? 'Optional for Individual Projects: You can optionally attach a project report, design document or whitepaper via file upload or web link (not required).'
-                      : 'Attach project report, design document or whitepaper via file upload or link.'}
-                  </p>
+                 
                 </div>
 
                 <div className="inline-flex rounded-[4px] border border-[#D5D5D5] bg-white p-0.5 shadow-2xs">
