@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp, useAuth } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { BackendReportModal } from './components/BackendReportModal';
 import { GuidelinesModal } from './components/GuidelinesModal';
 import { HelpModal } from './components/HelpModal';
 import { Home } from './pages/Home';
@@ -296,9 +295,6 @@ function AppContent() {
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
       />
-
-      {/* Backend Architecture & SQLite Integration Plan Modal */}
-      <BackendReportModal />
     </div>
   );
 }

@@ -38,6 +38,73 @@ export interface CollegeConfig {
   popularTechnologies: string[];
 }
 
+export const DEFAULT_DEPARTMENTS: Department[] = [
+  {
+    id: 'cse',
+    code: 'CSE',
+    name: 'Computer Science and Engineering',
+    shortName: 'CSE',
+    icon: 'Cpu',
+    description: 'Core computing, systems engineering, cryptography, and cloud platforms.',
+  },
+  {
+    id: 'aiml',
+    code: 'CSM',
+    name: 'Artificial Intelligence and Machine Learning',
+    shortName: 'AI & ML',
+    icon: 'Brain',
+    description: 'Deep neural networks, computer vision, NLP, and intelligent systems.',
+  },
+  {
+    id: 'ece',
+    code: 'ECE',
+    name: 'Electronics and Communication Engineering',
+    shortName: 'ECE',
+    icon: 'Radio',
+    description: 'VLSI architectures, embedded IoT telemetry, DSP, and antenna arrays.',
+  },
+  {
+    id: 'eee',
+    code: 'EEE',
+    name: 'Electrical and Electronics Engineering',
+    shortName: 'EEE',
+    icon: 'Zap',
+    description: 'Renewable energy microgrids, EV powertrains, and high-voltage simulation.',
+  },
+  {
+    id: 'me',
+    code: 'ME',
+    name: 'Mechanical Engineering',
+    shortName: 'Mechanical',
+    icon: 'Cog',
+    description: 'Robotics chassis, additive manufacturing, thermofluids, and CAD/CAM.',
+  },
+  {
+    id: 'it',
+    code: 'IT',
+    name: 'Information Technology',
+    shortName: 'IT',
+    icon: 'Layers',
+    description: 'Cybersecurity, fullstack engineering, database systems, and networks.',
+  },
+  {
+    id: 'civil',
+    code: 'CIVIL',
+    name: 'Civil Engineering',
+    shortName: 'Civil',
+    icon: 'Building2',
+    description: 'Structural health monitoring, concrete technology, and GIS urban modeling.',
+  },
+  {
+    id: 'ds',
+    code: 'CSE (DS)',
+    name: 'CSE Data Science',
+    shortName: 'CSE Data Science',
+    icon: 'BarChart3',
+    description: 'Big data telemetry, predictive statistics, and business intelligence.',
+  },
+];
+
 export const kitsCollegeConfig: CollegeConfig = {
   collegeName: 'KITS ProjectHub',
   collegeFullName: 'Kamala Institute of Technology and Science',
@@ -70,7 +137,7 @@ export const kitsCollegeConfig: CollegeConfig = {
     cyanAccent: '#03A9F5',
     activeTabBlue: '#0D6EFD',
   },
-  departments: [],
+  departments: DEFAULT_DEPARTMENTS,
   graduationYears: [2027, 2028, 2029, 2030, 2031],
   projectTypes: [
     'Major Capstone Project',

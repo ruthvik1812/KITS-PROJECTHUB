@@ -149,6 +149,27 @@ export async function verifyStudentRollNumber(studentRollNumber: string, departm
   });
 }
 
+/**
+ * Update authenticated user's profile details (Year & Semester, Section, etc.)
+ */
+export async function updateUserProfile(updates: {
+  fullName?: string;
+  yearSemester?: string;
+  section?: string;
+  mobile?: string;
+  fatherName?: string;
+  fatherMobile?: string;
+  parentEmail?: string;
+  presentAddress?: string;
+  dob?: string;
+}): Promise<{ message: string; user: AuthMeResponse }> {
+  return request<{ message: string; user: AuthMeResponse }>('/auth/profile', {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+
 // ─── Projects Repository API ──────────────────────────────────────────────────
 
 export interface ProjectSearchParams {

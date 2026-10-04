@@ -8,6 +8,8 @@ import {
   getPresetUser,
   verifyAndLinkStudentRollNumber,
   getUserById,
+  updateUserProfile,
+  deriveYearSemesterFromRoll,
   UserProfileRecord,
 } from '../services/userService.js';
 import { getGroupByUserId } from '../services/groupSqlService.js';
@@ -89,21 +91,21 @@ function formatUserResponse(user: UserProfileRecord) {
     fullName: user.full_name,
     name: user.full_name,
     role: user.role,
-    departmentId: user.department_id || 'cse',
-    departmentCode: departmentCode || (user.department_id ? user.department_id.toUpperCase() : 'CSE'),
+    departmentId: user.department_id || '',
+    departmentCode: departmentCode || (user.department_id ? user.department_id.toUpperCase() : ''),
     departmentName,
     studentRollNumber: user.student_roll_number,
     isVerified: Boolean(user.is_verified),
     photoUrl: user.photo_url,
     photoURL: user.photo_url,
-    section: user.section || 'CSE-B',
-    yearSemester: user.year_semester || 'IV Year I Semester',
-    mobile: user.mobile || '8639139326',
+    section: user.section || '',
+    yearSemester: user.year_semester || deriveYearSemesterFromRoll(user.student_roll_number) || '',
+    mobile: user.mobile || '',
     fatherName: user.father_name || '',
     fatherMobile: user.father_mobile || '',
     parentEmail: user.parent_email || '',
-    presentAddress: user.present_address || '#17-3/1,mamindlawada,huzurabad',
-    dob: user.dob || '0000-00-00',
+    presentAddress: user.present_address || '',
+    dob: user.dob || '',
     group: group || null,
     createdAt: user.created_at,
     updatedAt: user.updated_at,
@@ -337,6 +339,39 @@ router.post('/verify-roll', authenticate, (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Roll number verification error:', error);
     res.status(400).json({ error: sanitizeClientErrorMessage(error, 'Verification failed. Please check your roll number.') });
+  }
+});
+
+/**
+ * PUT /api/auth/profile
+ * Updates authenticated user's profile details (Year & Semester, Section, Mobile, etc.)
+ */
+router.put('/profile', authenticate, (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const { fullName, yearSemester, section, mobile, fatherName, fatherMobile, parentEmail, presentAddress, dob } = req.body;
+
+    const updated = updateUserProfile(user.id, {
+      fullName,
+      yearSemester,
+      section,
+      mobile,
+      fatherName,
+      fatherMobile,
+      parentEmail,
+      presentAddress,
+      dob,
+    });
+
+    console.log(`✓ Updated profile for "${updated.full_name}" (Year/Sem: ${updated.year_semester}, Section: ${updated.section})`);
+
+    res.json({
+      message: 'Profile updated successfully.',
+      user: formatUserResponse(updated),
+    });
+  } catch (error: any) {
+    console.error('Profile update error:', error);
+    res.status(400).json({ error: sanitizeClientErrorMessage(error, 'Failed to update profile. Please try again.') });
   }
 });
 

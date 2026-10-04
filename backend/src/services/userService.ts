@@ -27,6 +27,56 @@ export interface UserProfileRecord {
 export const VALID_BRANCHES = ['cse', 'aiml', 'ece', 'eee', 'me', 'it'];
 
 /**
+ * Automatically calculates academic Year & Semester from the first 2 digits of the student roll number.
+ * Example:
+ *   23281A0579 -> admission year 2023.
+ *   In Oct 2026: Academic year 2026-2027 (Odd sem) -> IV Year I Semester
+ *   In Jan-May 2027: Academic year 2026-2027 (Even sem) -> IV Year II Semester
+ *   24281A...  -> admission year 2024 -> III Year I Semester
+ *   25281A...  -> admission year 2025 -> II Year I Semester
+ *   26281A...  -> admission year 2026 -> I Year I Semester
+ */
+export function deriveYearSemesterFromRoll(rollNumber?: string | null): string {
+  if (!rollNumber || typeof rollNumber !== 'string') return '';
+  const clean = rollNumber.trim().toUpperCase();
+  const match = clean.match(/^\D*(\d{2})/);
+  if (!match) return '';
+
+  const batchDigits = parseInt(match[1], 10);
+  const batchYear = 2000 + batchDigits;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1-12
+
+  // June-Dec (>= 6) is Odd Semester (I Semester), Jan-May (< 6) is Even Semester (II Semester)
+  const isOddSem = currentMonth >= 6;
+  const academicStartYear = isOddSem ? currentYear : currentYear - 1;
+
+  // Lateral entry students have '5A' and enter directly in Year 2
+  const isLateral = /5A/i.test(clean);
+  const baseYear = isLateral ? 2 : 1;
+
+  const diffYears = academicStartYear - batchYear;
+  const currentStudyYear = diffYears + baseYear;
+  const semName = isOddSem ? 'I Semester' : 'II Semester';
+
+  const romanYears = ['I', 'II', 'III', 'IV'];
+  if (currentStudyYear <= 1) {
+    return `I Year ${semName}`;
+  } else if (currentStudyYear === 2) {
+    return `II Year ${semName}`;
+  } else if (currentStudyYear === 3) {
+    return `III Year ${semName}`;
+  } else if (currentStudyYear === 4) {
+    return `IV Year ${semName}`;
+  } else {
+    return `IV Year II Semester`;
+  }
+}
+
+
+/**
  * Hashes plaintext password using Argon2id
  */
 export async function hashPassword(password: string): Promise<string> {
@@ -126,11 +176,13 @@ export async function registerStudentAccount(params: {
   const role = 'student';
   const isVerified = 1; // Registered with student roll number
 
+  const derivedYearSem = deriveYearSemesterFromRoll(rollNumber);
+
   db.transaction(() => {
     db.prepare(`
-      INSERT INTO users (id, email, password_hash, full_name, role, department_id, student_roll_number, is_verified, photo_url, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
-    `).run(id, email, passwordHash, fullName, role, departmentId, rollNumber, isVerified, now, now);
+      INSERT INTO users (id, email, password_hash, full_name, role, department_id, student_roll_number, year_semester, is_verified, photo_url, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+    `).run(id, email, passwordHash, fullName, role, departmentId, rollNumber, derivedYearSem, isVerified, now, now);
   })();
 
   const newUser = db.prepare('SELECT id, email, full_name, role, department_id, student_roll_number, is_verified, photo_url, created_at, updated_at FROM users WHERE id = ?').get(id) as UserProfileRecord;
@@ -351,11 +403,13 @@ export function verifyAndLinkStudentRollNumber(
     throw new Error(`Roll number ${cleanRoll} is already registered to another account.`);
   }
 
+  const derivedYearSem = deriveYearSemesterFromRoll(cleanRoll);
+
   db.prepare(`
     UPDATE users 
-    SET student_roll_number = ?, is_verified = 1, department_id = COALESCE(?, department_id), updated_at = ? 
+    SET student_roll_number = ?, year_semester = COALESCE(?, year_semester), is_verified = 1, department_id = COALESCE(?, department_id), updated_at = ? 
     WHERE id = ?
-  `).run(cleanRoll, departmentId || null, now, userId);
+  `).run(cleanRoll, derivedYearSem, departmentId || null, now, userId);
 
   return db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as UserProfileRecord;
 }
@@ -364,3 +418,54 @@ export function getUserById(userId: string): UserProfileRecord | null {
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as UserProfileRecord | undefined;
   return user || null;
 }
+
+export function updateUserProfile(
+  userId: string,
+  data: {
+    fullName?: string;
+    yearSemester?: string;
+    section?: string;
+    mobile?: string;
+    fatherName?: string;
+    fatherMobile?: string;
+    parentEmail?: string;
+    presentAddress?: string;
+    dob?: string;
+  }
+): UserProfileRecord {
+  const now = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE users
+    SET full_name = COALESCE(?, full_name),
+        year_semester = COALESCE(?, year_semester),
+        section = COALESCE(?, section),
+        mobile = COALESCE(?, mobile),
+        father_name = COALESCE(?, father_name),
+        father_mobile = COALESCE(?, father_mobile),
+        parent_email = COALESCE(?, parent_email),
+        present_address = COALESCE(?, present_address),
+        dob = COALESCE(?, dob),
+        updated_at = ?
+    WHERE id = ?
+  `).run(
+    data.fullName !== undefined ? data.fullName.trim() : null,
+    data.yearSemester !== undefined ? data.yearSemester.trim() : null,
+    data.section !== undefined ? data.section.trim() : null,
+    data.mobile !== undefined ? data.mobile.trim() : null,
+    data.fatherName !== undefined ? data.fatherName.trim() : null,
+    data.fatherMobile !== undefined ? data.fatherMobile.trim() : null,
+    data.parentEmail !== undefined ? data.parentEmail.trim() : null,
+    data.presentAddress !== undefined ? data.presentAddress.trim() : null,
+    data.dob !== undefined ? data.dob.trim() : null,
+    now,
+    userId
+  );
+
+  const updated = getUserById(userId);
+  if (!updated) {
+    throw new Error('User not found after update.');
+  }
+  return updated;
+}
+

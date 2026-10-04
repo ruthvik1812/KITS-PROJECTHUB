@@ -3,22 +3,15 @@ import {
   Project,
   UserProfile,
   UserRole,
-  ReviewRubric,
-  ReviewFeedback,
-  ProjectPrivateData,
-  LearnerPracticeRecord,
-  ProjectDiscussionPost,
   Department,
 } from '../types';
-import { kitsCollegeConfig } from '../config/collegeConfig';
+import { kitsCollegeConfig, DEFAULT_DEPARTMENTS } from '../config/collegeConfig';
 import {
   fetchAuthMe,
   logoutUser,
   loginUser,
   registerUser,
   setupUserPassword,
-  quickLogin,
-  verifyStudentRollNumber as apiVerifyRoll,
   fetchProjects as apiFetchProjects,
   fetchDepartments,
   recordProjectView,
@@ -26,11 +19,11 @@ import {
   fetchWishlistIds,
   addToWishlist as apiAddToWishlist,
   removeFromWishlist as apiRemoveFromWishlist,
+  updateUserProfile as apiUpdateUserProfile,
 } from '../services/apiClient';
 
 export interface AuthContextType {
   currentUser: UserProfile;
-  firebaseUser: any | null; // Safe user profile compatibility
   isLoadingAuth: boolean;
   isAuthenticated: boolean;
   isStudent: boolean;
@@ -47,24 +40,14 @@ export interface AuthContextType {
     password: string;
   }) => Promise<void>;
   setupPassword?: (identifier: string, newPassword: string) => Promise<void>;
-  quickSignIn: (preset: string) => Promise<void>;
-  devQuickSignIn?: (preset: 'leader' | 'student' | 'faculty' | 'admin') => Promise<void>;
-  signInGoogle: (returnTo?: string) => void;
-  signInGoogleRedirect?: (returnTo?: string) => void;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
-  verifyStudentRoll: (rollNumber: string, departmentId?: string) => Promise<void>;
   refreshCurrentUser: () => Promise<void>;
-  setCurrentUserRole: (role: UserRole) => void;
-  promoteUserRole: (targetUid: string, role: UserRole, membershipApproved: boolean) => Promise<void>;
-  allUsers: UserProfile[];
-  refreshUsers: () => Promise<void>;
 }
 
 export interface AppContextType extends AuthContextType {
   projects: Project[];
   refreshProjects: () => Promise<void>;
-  isFirestoreConnected: boolean;
   wishlistIds: string[];
   isProjectSaved: (projectId: string) => boolean;
   saveToWishlist: (projectId: string) => Promise<{ success: boolean; alreadySaved?: boolean; message?: string }>;
@@ -72,173 +55,32 @@ export interface AppContextType extends AuthContextType {
   refreshWishlist: () => Promise<void>;
   pendingWishlistId: string | null;
   setPendingWishlistId: (id: string | null) => void;
-  addProject: (
-    newProj: Omit<Project, 'id' | 'submittedAt' | 'updatedAt' | 'viewsCount' | 'likesCount'>,
-    privateData: {
-      studentEmail: string;
-      studentRollNumber: string;
-      mentorEmail?: string;
-      teamRoster: {
-        name: string;
-        rollNumber: string;
-        email?: string;
-        role: string;
-        contribution: string;
-      }[];
-      academicIntegrityCertified: boolean;
-    }
-  ) => Promise<string>;
-  submitFacultyReview: (
-    projectId: string,
-    decision: 'approved' | 'needs_revision' | 'rejected',
-    comments: string,
-    rubric?: ReviewRubric
-  ) => Promise<void>;
-  toggleLike: (projectId: string) => void;
   recordView: (projectId: string) => Promise<number | undefined>;
   recordShare: (projectId: string, shareType?: string) => Promise<number | undefined>;
-  fetchPrivateProjectData: (projectId: string) => Promise<ProjectPrivateData | null>;
-  getProjectById: (id: string) => Project | undefined;
-
-  // Project-based Learning & Practice System
-  learnerPractices: Record<string, LearnerPracticeRecord>;
-  enrolInProject: (projectId: string) => void;
-  toggleMilestoneCompletion: (projectId: string, milestoneId: string) => void;
-  updatePracticeNotes: (projectId: string, notes: string, repoUrl?: string) => void;
-  addDiscussionPost: (projectId: string, content: string, replyToId?: string) => void;
-  upvoteDiscussionPost: (projectId: string, postId: string) => void;
-  pathProgress: Record<string, { completedStageNumbers: number[]; diagnosticDone?: boolean }>;
-  togglePathStageCompletion: (pathId: string, stageNumber: number) => void;
-
-  isBackendReportOpen: boolean;
-  setIsBackendReportOpen: (open: boolean) => void;
-  isDemoBannerVisible: boolean;
-  dismissDemoBanner: () => void;
-  resetDemoData: () => void;
+  getProjectById?: (id: string) => Project | undefined;
 
   // Academic Departments
   departments: Department[];
   refreshDepartments: () => Promise<void>;
 }
 
-export const DEFAULT_DEPARTMENTS: Department[] = [
-  {
-    id: 'aiml',
-    code: 'CSM',
-    name: 'Artificial Intelligence and Machine Learning',
-    shortName: 'AI & ML',
-    icon: 'Brain',
-    description: 'Deep neural networks, computer vision, multilingual NLP, autonomous robotics, and edge inference pipelines.',
-    hodName: 'Dr. S. Ramesh Kumar',
-    hodEmail: 'hod.aiml@kitsts.ac.in',
-    labsCount: 5,
-  },
-  {
-    id: 'cse',
-    code: 'CSE',
-    name: 'Computer Science and Engineering',
-    shortName: 'CSE',
-    icon: 'Cpu',
-    description: 'Core computing, distributed algorithms, systems engineering, cryptography, and cloud platforms.',
-    hodName: 'Dr. P. Niranjan',
-    hodEmail: 'hod.cse@kitsts.ac.in',
-    labsCount: 7,
-  },
-  {
-    id: 'ece',
-    code: 'ECE',
-    name: 'Electronics and Communication Engineering',
-    shortName: 'ECE',
-    icon: 'Radio',
-    description: 'VLSI architectures, embedded IoT telemetry, FPGA accelerator design, signal processing, and antenna arrays.',
-    hodName: 'Dr. B. Rama Devi',
-    hodEmail: 'hod.ece@kitsts.ac.in',
-    labsCount: 6,
-  },
-  {
-    id: 'eee',
-    code: 'EEE',
-    name: 'Electrical and Electronics Engineering',
-    shortName: 'EEE',
-    icon: 'Zap',
-    description: 'Renewable energy microgrids, EV powertrains, bidirectional fast chargers, and high-voltage simulation.',
-    hodName: 'Dr. C. Venkatesh',
-    hodEmail: 'hod.eee@kitsts.ac.in',
-    labsCount: 4,
-  },
-  {
-    id: 'me',
-    code: 'ME',
-    name: 'Mechanical Engineering',
-    shortName: 'Mechanical',
-    icon: 'Cog',
-    description: 'Robotics chassis, additive manufacturing, thermofluids, multi-axis robotic arms, and CAD/CAM.',
-    hodName: 'Dr. K. Sridhar',
-    hodEmail: 'hod.mech@kitsts.ac.in',
-    labsCount: 6,
-  },
-  {
-    id: 'it',
-    code: 'IT',
-    name: 'Information Technology',
-    shortName: 'IT',
-    icon: 'Layers',
-    description: 'Cybersecurity, fullstack engineering, database systems, DevOps, and mobile networks.',
-    hodName: 'Dr. T. Senthil Murugan',
-    hodEmail: 'hod.it@kitsts.ac.in',
-    labsCount: 4,
-  },
-  {
-    id: 'civil',
-    code: 'CIVIL',
-    name: 'Civil Engineering',
-    shortName: 'Civil',
-    icon: 'Building2',
-    description: 'Structural health monitoring, sustainable geopolymer concrete, GIS hydrological modeling, and smart urban infrastructure.',
-    hodName: 'Dr. T. Narsimha Reddy',
-    hodEmail: 'hod.civil@kitsts.ac.in',
-    labsCount: 6,
-  },
-  {
-    id: 'ds',
-    code: 'CSE (DS)',
-    name: 'CSE Data Science',
-    shortName: 'CSE Data Science',
-    icon: 'BarChart3',
-    description: 'Big data telemetry pipelines, predictive Bayesian statistics, high-dimensional anomaly detection, and business intelligence.',
-    hodName: 'Dr. V. Rajeshwari',
-    hodEmail: 'hod.ds@kitsts.ac.in',
-    labsCount: 4,
-  },
-];
-
 const defaultAnonymousUser: UserProfile = {
   uid: 'guest-visitor',
-  name: 'Visitor / Prospective Evaluator',
+  name: 'Visitor',
   email: '',
   role: 'visitor',
   membershipApproved: false,
-  departmentId: 'cse',
-  departmentName: 'Computer Science and Engineering',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: '',
+  updatedAt: '',
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const BANNER_STORAGE_KEY = 'kits_demo_banner_dismissed_v2';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile>(defaultAnonymousUser);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState<boolean>(true);
-  const [isFirestoreConnected, setIsFirestoreConnected] = useState<boolean>(true);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-  const [isBackendReportOpen, setIsBackendReportOpen] = useState<boolean>(false);
-  const [isDemoBannerVisible, setIsDemoBannerVisible] = useState<boolean>(() => {
-    return localStorage.getItem(BANNER_STORAGE_KEY) !== 'true';
-  });
   const [departments, setDepartments] = useState<Department[]>(DEFAULT_DEPARTMENTS);
 
   const refreshDepartments = async () => {
@@ -292,18 +134,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           photoUrl: me.photoUrl || me.photoURL || undefined,
           role: (me.role as UserRole) || 'student',
           membershipApproved: Boolean(me.isVerified || me.role === 'admin'),
-          departmentId: me.departmentId || 'cse',
-          departmentName: me.departmentName || 'Computer Science and Engineering',
+          departmentId: me.departmentId || '',
+          departmentName: me.departmentName || '',
           rollNumber: me.studentRollNumber,
           studentRollNumber: me.studentRollNumber,
-          section: me.section || 'A1',
-          yearSemester: me.yearSemester || 'II Year I Semester',
-          mobile: me.mobile || '  8019191292',
+          section: me.section || '',
+          yearSemester: me.yearSemester || '',
+          mobile: me.mobile || '',
           fatherName: me.fatherName || '',
           fatherMobile: me.fatherMobile || '',
           parentEmail: me.parentEmail || '',
-          presentAddress: me.presentAddress || '#17-3/1,mamindlawada,huzurabad',
-          dob: me.dob || '0000-00-00',
+          presentAddress: me.presentAddress || '',
+          dob: me.dob || '',
           isVerified: Boolean(me.isVerified),
           group: me.group || null,
           createdAt: me.createdAt || new Date().toISOString(),
@@ -350,8 +192,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             description: p.summary,
             problemStatement: p.problem_statement || p.problemStatement,
             problem_statement: p.problem_statement || p.problemStatement,
-            departmentId: p.department_id || p.departmentId || 'cse',
-            departmentName: (p.department_name && p.department_name !== 'Engineering') ? p.department_name : (p.departmentName && p.departmentName !== 'Engineering' ? p.departmentName : ''),
+            departmentId: p.department_id || p.departmentId || '',
+            departmentName: p.department_name || p.departmentName || '',
             departmentCode: p.department_code || p.departmentCode || (p.department_id ? p.department_id.toUpperCase() : 'CSE'),
             graduationYear: parseInt((p.academic_year || '2027').split('-')[0], 10) + 1,
             academicYear: p.academic_year || '2026-2027',
@@ -369,12 +211,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             })),
             original_authors: p.original_authors || [],
             mentor: {
-              name: p.faculty_mentor_name || (submissionType === 'individual' ? '' : 'Dr. M. Ravindra Babu'),
-              designation: p.faculty_mentor_role || (submissionType === 'individual' ? '' : 'Professor & HOD'),
-              department: p.department_id || (submissionType === 'individual' ? '' : 'CSE'),
+              name: p.faculty_mentor_name || '',
+              designation: p.faculty_mentor_role || '',
+              department: p.department_id || '',
             },
-            faculty_mentor_name: p.faculty_mentor_name || (submissionType === 'individual' ? undefined : 'Dr. M. Ravindra Babu'),
-            faculty_mentor_role: p.faculty_mentor_role || (submissionType === 'individual' ? undefined : 'Professor & HOD · CSE'),
+            faculty_mentor_name: p.faculty_mentor_name || undefined,
+            faculty_mentor_role: p.faculty_mentor_role || undefined,
             thumbnail: p.thumbnail || (p.screenshots && p.screenshots[0]) || '',
             links: {
               website: p.live_demo_url,
@@ -403,7 +245,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           };
         });
         setProjects(mapped);
-        setIsFirestoreConnected(true);
       }
     } catch (err) {
       console.warn('Backend projects load notice:', err);
@@ -539,31 +380,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Quick 1-Click Sign-in for Presets
-  const quickSignIn = async (preset: string) => {
-    setIsLoadingAuth(true);
-    try {
-      await quickLogin(preset);
-      await loadUserSession();
-    } catch (err) {
-      console.error('quickSignIn failed:', err);
-      setIsLoadingAuth(false);
-      throw err;
-    }
-  };
-
-  const devQuickSignIn = async (preset: 'leader' | 'student' | 'faculty' | 'admin') => {
-    await quickSignIn(preset);
-  };
-
-  const signInGoogle = (_returnTo?: string) => {
-    quickSignIn('leader');
-  };
-
-  const signInGoogleRedirect = (_returnTo?: string) => {
-    quickSignIn('leader');
-  };
-
   // Sign out
   const signOut = async () => {
     try {
@@ -581,110 +397,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadUserSession();
   };
 
-  // Verify and link official college student roll number
-  const verifyStudentRoll = async (rollNumber: string, departmentId?: string) => {
-    await apiVerifyRoll(rollNumber, departmentId);
-    await refreshCurrentUser();
-  };
-
-  // Self Profile Update
+  // Self Profile Update (persisted to database)
   const updateProfile = async (updates: Partial<UserProfile>) => {
-    setCurrentUser((prev) => ({ ...prev, ...updates }));
+    try {
+      const res = await apiUpdateUserProfile({
+        fullName: updates.fullName || updates.name,
+        yearSemester: updates.yearSemester,
+        section: updates.section,
+        mobile: updates.mobile,
+        fatherName: updates.fatherName,
+        fatherMobile: updates.fatherMobile,
+        parentEmail: updates.parentEmail,
+        presentAddress: updates.presentAddress,
+        dob: updates.dob,
+      });
+      if (res?.user) {
+        setCurrentUser((prev) => ({
+          ...prev,
+          ...updates,
+          yearSemester: res.user.yearSemester ?? updates.yearSemester ?? prev.yearSemester,
+          section: res.user.section ?? updates.section ?? prev.section,
+        }));
+      } else {
+        setCurrentUser((prev) => ({ ...prev, ...updates }));
+      }
+    } catch (err) {
+      console.warn('Profile update API error, applying local state update:', err);
+      setCurrentUser((prev) => ({ ...prev, ...updates }));
+      throw err;
+    }
   };
 
-  // Perspective simulation or active role override
-  const setCurrentUserRole = (role: UserRole) => {
-    setCurrentUser((prev) => ({
-      ...prev,
-      role,
-      membershipApproved: role === 'admin' ? true : prev.membershipApproved,
-    }));
-  };
-
-  // Promote user role (Admin capability)
-  const promoteUserRole = async (_targetUid: string, role: UserRole, membershipApproved: boolean) => {
-    setCurrentUser((prev) => ({ ...prev, role, membershipApproved }));
-  };
-
-  const refreshUsers = async () => {
-    // Admin user refresh hook
-  };
-
-  // Add project to SQL repository
-  const addProject = async (
-    newProj: Omit<Project, 'id' | 'submittedAt' | 'updatedAt' | 'viewsCount' | 'likesCount'>,
-    _privateData: any
-  ): Promise<string> => {
-    const fallbackId = `kits-proj-${Date.now()}`;
-    const now = new Date().toISOString();
-    const created: Project = {
-      ...newProj,
-      id: fallbackId,
-      submittedAt: now,
-      updatedAt: now,
-      viewsCount: 1,
-      likesCount: 0,
-      isLiked: false,
-    };
-    setProjects((prev) => [created, ...prev]);
-    return fallbackId;
-  };
-
-  // Submit faculty review and rubric evaluation
-  const submitFacultyReview = async (
-    projectId: string,
-    decision: 'approved' | 'needs_revision' | 'rejected',
-    comments: string,
-    rubric?: ReviewRubric
-  ) => {
-    const now = new Date().toISOString();
-    const feedback: ReviewFeedback = {
-      id: `rev-${Date.now()}`,
-      reviewerId: currentUser.uid,
-      reviewerName: currentUser.name,
-      reviewerDepartment: currentUser.departmentName || 'Department Committee',
-      decision,
-      comments,
-      rubric,
-      reviewedAt: now,
-    };
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId) {
-          return {
-            ...p,
-            status: decision,
-            reviews: [feedback, ...(p.reviews || [])],
-            updatedAt: now,
-          };
-        }
-        return p;
-      })
-    );
-  };
-
-  const fetchPrivateProjectData = async (_projectId: string) => {
-    return null;
-  };
-
-  // Project like toggle
-  const toggleLike = (projectId: string) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId) {
-          const isLiked = !p.isLiked;
-          return {
-            ...p,
-            isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : Math.max(0, p.likesCount - 1),
-          };
-        }
-        return p;
-      })
-    );
-  };
-
-  // Project view counter with backend synchronization (Instagram style)
+  // Project view counter with backend synchronization (Strict 1 count per student)
   const recordView = async (projectId: string): Promise<number | undefined> => {
     try {
       const res = await recordProjectView(projectId);
@@ -701,18 +445,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.warn('View record notice:', err);
     }
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId) {
-          const next = (p.viewsCount || 0) + 1;
-          return { ...p, viewsCount: next, views_count: next };
-        }
-        return p;
-      })
-    );
   };
 
-  // Project share counter with backend synchronization (Instagram style)
+  // Project share counter with backend synchronization (Strict 1 count per student)
   const recordShare = async (projectId: string, shareType: string = 'share'): Promise<number | undefined> => {
     try {
       const res = await recordProjectShare(projectId, shareType);
@@ -729,217 +464,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.warn('Share record notice:', err);
     }
-    let updatedCount: number | undefined;
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId) {
-          const next = (p.sharesCount || 0) + 1;
-          updatedCount = next;
-          return { ...p, sharesCount: next, shares_count: next };
-        }
-        return p;
-      })
-    );
-    return updatedCount;
   };
 
   const getProjectById = (id: string): Project | undefined => {
     return projects.find((p) => p.id === id);
-  };
-
-  const dismissDemoBanner = () => {
-    setIsDemoBannerVisible(false);
-    localStorage.setItem(BANNER_STORAGE_KEY, 'true');
-  };
-
-  const resetDemoData = () => {
-    setProjects([]);
-  };
-
-  // Local/Session Persistence for Learner Practice Records & Path Progress
-  const [learnerPractices, setLearnerPractices] = useState<Record<string, LearnerPracticeRecord>>(() => {
-    try {
-      const stored = localStorage.getItem('kits_learner_practices_v2');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const [pathProgress, setPathProgress] = useState<Record<string, { completedStageNumbers: number[]; diagnosticDone?: boolean }>>(() => {
-    try {
-      const stored = localStorage.getItem('kits_learning_path_progress_v2');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const enrolInProject = (projectId: string) => {
-    setLearnerPractices((prev) => {
-      if (prev[projectId]) return prev;
-      const newRecord: LearnerPracticeRecord = {
-        id: `prac-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        projectId,
-        userId: currentUser.uid,
-        userName: currentUser.name || 'Learner',
-        userRole: currentUser.role,
-        enrolledAt: new Date().toISOString(),
-        completedMilestoneIds: [],
-        notes: '',
-        status: 'in-progress',
-        lastUpdated: new Date().toISOString(),
-      };
-      const updated = { ...prev, [projectId]: newRecord };
-      try {
-        localStorage.setItem('kits_learner_practices_v2', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  };
-
-  const toggleMilestoneCompletion = (projectId: string, milestoneId: string) => {
-    setLearnerPractices((prev) => {
-      const existing = prev[projectId] || {
-        id: `prac-${Date.now()}`,
-        projectId,
-        userId: currentUser.uid,
-        userName: currentUser.name || 'Learner',
-        userRole: currentUser.role,
-        enrolledAt: new Date().toISOString(),
-        completedMilestoneIds: [],
-        notes: '',
-        status: 'in-progress',
-        lastUpdated: new Date().toISOString(),
-      };
-
-      const completed = existing.completedMilestoneIds.includes(milestoneId)
-        ? existing.completedMilestoneIds.filter((id) => id !== milestoneId)
-        : [...existing.completedMilestoneIds, milestoneId];
-
-      const updated = {
-        ...prev,
-        [projectId]: {
-          ...existing,
-          completedMilestoneIds: completed,
-          lastUpdated: new Date().toISOString(),
-        },
-      };
-
-      try {
-        localStorage.setItem('kits_learner_practices_v2', JSON.stringify(updated));
-      } catch {}
-
-      return updated;
-    });
-  };
-
-  const updatePracticeNotes = (projectId: string, notes: string, repoUrl?: string) => {
-    setLearnerPractices((prev) => {
-      const existing = prev[projectId] || {
-        id: `prac-${Date.now()}`,
-        projectId,
-        userId: currentUser.uid,
-        userName: currentUser.name || 'Learner',
-        enrolledAt: new Date().toISOString(),
-        completedMilestoneIds: [],
-        notes: '',
-        status: 'in-progress',
-        lastUpdated: new Date().toISOString(),
-      };
-
-      const updated = {
-        ...prev,
-        [projectId]: {
-          ...existing,
-          notes,
-          ...(repoUrl !== undefined ? { repoUrl } : {}),
-          lastUpdated: new Date().toISOString(),
-        },
-      };
-
-      try {
-        localStorage.setItem('kits_learner_practices_v2', JSON.stringify(updated));
-      } catch {}
-
-      return updated;
-    });
-  };
-
-  const addDiscussionPost = (projectId: string, content: string, replyToId?: string) => {
-    const newPost: ProjectDiscussionPost = {
-      id: `post-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      projectId,
-      authorUid: currentUser.uid,
-      authorName: currentUser.name || 'KITS Learner',
-      authorRole: (currentUser.role === 'admin' ? 'faculty' : currentUser.role === 'visitor' ? 'guest' : currentUser.role) as any,
-      avatar: currentUser.photoURL,
-      content,
-      timestamp: new Date().toISOString(),
-      isOriginalAuthor: false,
-      upvotes: 0,
-      replyToId,
-    };
-
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId) {
-          const currentPosts = p.discussionPosts || [];
-          return {
-            ...p,
-            discussionPosts: [newPost, ...currentPosts],
-          };
-        }
-        return p;
-      })
-    );
-  };
-
-  const upvoteDiscussionPost = (projectId: string, postId: string) => {
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.id === projectId && p.discussionPosts) {
-          return {
-            ...p,
-            discussionPosts: p.discussionPosts.map((post) => {
-              if (post.id === postId) {
-                const hasUpvoted = post.hasUpvoted;
-                return {
-                  ...post,
-                  hasUpvoted: !hasUpvoted,
-                  upvotes: hasUpvoted ? Math.max(0, post.upvotes - 1) : post.upvotes + 1,
-                };
-              }
-              return post;
-            }),
-          };
-        }
-        return p;
-      })
-    );
-  };
-
-  const togglePathStageCompletion = (pathId: string, stageNumber: number) => {
-    setPathProgress((prev) => {
-      const existing = prev[pathId] || { completedStageNumbers: [] };
-      const completed = existing.completedStageNumbers.includes(stageNumber)
-        ? existing.completedStageNumbers.filter((n) => n !== stageNumber)
-        : [...existing.completedStageNumbers, stageNumber];
-
-      const updated = {
-        ...prev,
-        [pathId]: {
-          ...existing,
-          completedStageNumbers: completed,
-        },
-      };
-
-      try {
-        localStorage.setItem('kits_learning_path_progress_v2', JSON.stringify(updated));
-      } catch {}
-
-      return updated;
-    });
   };
 
   // Role booleans computed for convenience
@@ -953,7 +481,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     () => ({
       // Auth & User Profile
       currentUser,
-      firebaseUser: isAuthenticated ? { uid: currentUser.uid, email: currentUser.email, displayName: currentUser.name } : null,
       isLoadingAuth,
       isAuthenticated,
       isStudent,
@@ -964,29 +491,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       signIn,
       registerAccount,
       setupPassword,
-      quickSignIn,
-      devQuickSignIn,
-      signInGoogle,
-      signInGoogleRedirect,
       signOut,
       updateProfile,
-      verifyStudentRoll,
       refreshCurrentUser,
-      setCurrentUserRole,
-      promoteUserRole,
-      allUsers,
-      refreshUsers,
 
       // Projects & Data Store
       projects,
       refreshProjects,
-      isFirestoreConnected,
-      addProject,
-      submitFacultyReview,
-      toggleLike,
       recordView,
       recordShare,
-      fetchPrivateProjectData,
       getProjectById,
 
       // Wishlist System
@@ -997,23 +510,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       refreshWishlist,
       pendingWishlistId,
       setPendingWishlistId,
-
-      // Project-based Learning & Practice System
-      learnerPractices,
-      enrolInProject,
-      toggleMilestoneCompletion,
-      updatePracticeNotes,
-      addDiscussionPost,
-      upvoteDiscussionPost,
-      pathProgress,
-      togglePathStageCompletion,
-
-      // Modals & UI Controls
-      isBackendReportOpen,
-      setIsBackendReportOpen,
-      isDemoBannerVisible,
-      dismissDemoBanner,
-      resetDemoData,
 
       // Departments
       departments,
@@ -1028,16 +524,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isAdmin,
       isVisitor,
       isMembershipApproved,
-      allUsers,
       projects,
       departments,
-      isFirestoreConnected,
       wishlistIds,
       pendingWishlistId,
-      learnerPractices,
-      pathProgress,
-      isBackendReportOpen,
-      isDemoBannerVisible,
     ]
   );
 
@@ -1059,7 +549,6 @@ export const useAuth = (): AuthContextType => {
   }
   return {
     currentUser: context.currentUser,
-    firebaseUser: context.firebaseUser,
     isLoadingAuth: context.isLoadingAuth,
     isAuthenticated: context.isAuthenticated,
     isStudent: context.isStudent,
@@ -1070,17 +559,8 @@ export const useAuth = (): AuthContextType => {
     signIn: context.signIn,
     registerAccount: context.registerAccount,
     setupPassword: context.setupPassword,
-    quickSignIn: context.quickSignIn,
-    signInGoogle: context.signInGoogle,
-    signInGoogleRedirect: context.signInGoogleRedirect,
-    devQuickSignIn: context.devQuickSignIn,
     signOut: context.signOut,
     updateProfile: context.updateProfile,
-    verifyStudentRoll: context.verifyStudentRoll,
     refreshCurrentUser: context.refreshCurrentUser,
-    setCurrentUserRole: context.setCurrentUserRole,
-    promoteUserRole: context.promoteUserRole,
-    allUsers: context.allUsers,
-    refreshUsers: context.refreshUsers,
   };
 };

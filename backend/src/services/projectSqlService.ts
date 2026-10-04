@@ -445,9 +445,10 @@ function parseJsonSafe(str: any, fallback: any) {
 }
 
 /**
- * Records an Instagram-style view for a project.
- * Deduplication: Short session cooldown (5 seconds per viewer) to prevent burst spamming,
- * while allowing repeat visits, page loads, and browsing sessions to increment views smoothly.
+/**
+ * Records a view for a project.
+ * Deduplication: Strictly 1 view per student / viewer. Repeat views from the same student
+ * are deduplicated and will never count multiple times.
  */
 export function recordProjectView(projectId: string, viewerKey: string) {
   const project = db.prepare(`SELECT id, status, views_count FROM projects WHERE id = ?`).get(projectId) as any;
@@ -455,21 +456,17 @@ export function recordProjectView(projectId: string, viewerKey: string) {
     throw new Error('Project not found');
   }
 
-  // Check recent view cooldown (5s per viewer session to allow repeat visits to count while deduplicating immediate double clicks)
-  const recentView = db.prepare(`
+  // Check if this student/viewer has ALREADY viewed this project
+  const existingView = db.prepare(`
     SELECT id, viewed_at 
     FROM project_views 
     WHERE project_id = ? AND viewer_key = ? 
-    ORDER BY viewed_at DESC LIMIT 1
+    LIMIT 1
   `).get(projectId, viewerKey) as any;
 
-  if (recentView) {
-    const elapsed = Date.now() - new Date(recentView.viewed_at).getTime();
-    const sessionCooldown = 5 * 1000; // 5 seconds
-    if (elapsed < sessionCooldown) {
-      // Deduplicated within 5-second session cooldown window
-      return { counted: false, views_count: project.views_count || 0 };
-    }
+  if (existingView) {
+    // Already viewed by this student: strictly count only once!
+    return { counted: false, views_count: project.views_count || 0 };
   }
 
   // Insert view log and increment count atomically
@@ -497,9 +494,9 @@ export function recordProjectView(projectId: string, viewerKey: string) {
 }
 
 /**
- * Records an Instagram-style share event for a project.
- * Short 2-second cooldown per sharer on the same project prevents rapid button spam,
- * but allows consecutive shares across platforms (WhatsApp, Telegram, Copy Link, etc.).
+ * Records a share event for a project.
+ * Deduplication: Strictly 1 share per student / sharer. Repeat shares from the same student
+ * are deduplicated and will never count multiple times.
  */
 export function recordProjectShare(projectId: string, sharerKey: string, shareType: string = 'share') {
   const project = db.prepare(`SELECT id, status, shares_count FROM projects WHERE id = ?`).get(projectId) as any;
@@ -507,19 +504,17 @@ export function recordProjectShare(projectId: string, sharerKey: string, shareTy
     throw new Error('Project not found');
   }
 
-  // Rate-limiting check: 2 seconds cooldown per sharer on the same project
-  const recentShare = db.prepare(`
+  // Check if this student/sharer has ALREADY shared this project
+  const existingShare = db.prepare(`
     SELECT id, shared_at 
     FROM project_shares 
     WHERE project_id = ? AND sharer_key = ? 
-    ORDER BY shared_at DESC LIMIT 1
+    LIMIT 1
   `).get(projectId, sharerKey) as any;
 
-  if (recentShare) {
-    const elapsed = Date.now() - new Date(recentShare.shared_at).getTime();
-    if (elapsed < 2 * 1000) {
-      return { counted: false, shares_count: project.shares_count || 0 };
-    }
+  if (existingShare) {
+    // Already shared by this student: strictly count only once!
+    return { counted: false, shares_count: project.shares_count || 0 };
   }
 
   const shareId = `sh-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;

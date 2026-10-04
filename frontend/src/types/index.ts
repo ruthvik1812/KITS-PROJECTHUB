@@ -280,9 +280,9 @@ export interface Department {
   shortName: string;
   icon?: string;
   description: string;
-  hodName: string;
-  hodEmail: string;
-  labsCount: number;
+  hodName?: string;
+  hodEmail?: string;
+  labsCount?: number;
 }
 
 export type UserRole = 'student' | 'faculty' | 'admin' | 'visitor';
