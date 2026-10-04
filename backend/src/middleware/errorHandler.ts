@@ -19,10 +19,28 @@ const SENSITIVE_PATTERNS = [
   /enotfound/i,
   /node_modules/i,
   /webpack/i,
+  /vite/i,
   /(\/|\\)[a-zA-Z0-9_.-]+(\/|\\)/, // directory paths
   /([A-Za-z]:[\\/])/i,              // Windows drive letters like C:\ or E:/
-  /\.(ts|js|json|sql|db|lock):[0-9]+/i, // File line numbers like server.ts:42
+  /(\/home|\/Users|\/var|\/tmp|\/etc)/i, // Unix system paths
+  /\.(ts|js|json|sql|db|lock|mjs|cjs):[0-9]+/i, // File line numbers like server.ts:42
   /^\s*at\s+/m,                     // Stack trace lines
+  /typeerror/i,
+  /referenceerror/i,
+  /rangeerror/i,
+  /syntaxerror/i,
+  /evalerror/i,
+  /urierror/i,
+  /cannot read propert/i,
+  /is not a function/i,
+  /is not defined/i,
+  /call stack/i,
+  /stack trace/i,
+  /uncaught/i,
+  /unhandled/i,
+  /query failed/i,
+  /failed with status/i,
+  /internal error/i,
   /argon2/i,
   /password_hash/i,
   /secret/i,

@@ -15,7 +15,7 @@ router.get('/departments', (_req: Request, res: Response) => {
     res.json(departments);
   } catch (error) {
     console.error('Error fetching departments:', error);
-    res.status(500).json({ error: 'Failed to fetch departments' });
+    res.status(500).json({ error: 'Failed to retrieve academic departments. Please try again later.' });
   }
 });
 
@@ -37,7 +37,7 @@ router.get(
       res.json(users);
     } catch (error) {
       console.error('Error fetching users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
+      res.status(500).json({ error: 'Failed to retrieve user accounts. Please try again later.' });
     }
   }
 );
@@ -69,7 +69,7 @@ router.patch(
       res.json({ success: true, user: updated });
     } catch (error) {
       console.error('Error updating user role:', error);
-      res.status(500).json({ error: 'Failed to update user role' });
+      res.status(500).json({ error: 'Failed to update user role. Please try again later.' });
     }
   }
 );

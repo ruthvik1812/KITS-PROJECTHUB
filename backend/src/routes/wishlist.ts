@@ -55,7 +55,7 @@ router.post('/:projectId', authenticate, (req: Request, res: Response) => {
     }
 
     if (!projectId) {
-      res.status(400).json({ error: 'Missing projectId.' });
+      res.status(400).json({ error: 'Project ID is required.' });
       return;
     }
 
@@ -85,7 +85,7 @@ router.delete('/:projectId', authenticate, (req: Request, res: Response) => {
     }
 
     if (!projectId) {
-      res.status(400).json({ error: 'Missing projectId.' });
+      res.status(400).json({ error: 'Project ID is required.' });
       return;
     }
 

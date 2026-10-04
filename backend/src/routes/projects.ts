@@ -24,7 +24,7 @@ router.post('/upload-doc', authenticate, (req: Request, res: Response) => {
   try {
     const { fileName, fileData } = req.body;
     if (!fileName || !fileData) {
-      res.status(400).json({ error: 'Missing fileName or fileData' });
+      res.status(400).json({ error: 'File name and file data are required.' });
       return;
     }
 
@@ -438,7 +438,7 @@ router.post('/', authenticate, (req: Request, res: Response) => {
 
       if (duplicateUrl) {
         res.status(409).json({
-          error: `Duplicate link check: Project-specific URL matches existing project "${duplicateUrl.title}" (${duplicateUrl.id}). Duplicate submissions are prevented.`
+          error: `This project URL is already linked to project "${duplicateUrl.title}". Duplicate submissions are prevented.`
         });
         return;
       }
@@ -545,7 +545,7 @@ router.put('/:id', authenticate, (req: Request, res: Response) => {
 
     const existing = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(projectId) as any;
     if (!existing) {
-      res.status(404).json({ error: `Project with ID ${projectId} not found.` });
+      res.status(404).json({ error: 'Project not found.' });
       return;
     }
 

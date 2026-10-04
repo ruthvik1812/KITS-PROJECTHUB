@@ -1,5 +1,17 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
+function sanitizeErrorMessage(rawMessage: any, defaultFallback: string = 'The request could not be completed. Please try again.'): string {
+  if (!rawMessage || typeof rawMessage !== 'string') return defaultFallback;
+  const msg = rawMessage.trim();
+  if (
+    /sqlite|sql|pragma|syntax error|constraint|foreign key|disk i\/o|enoent|eacces|webpack|vite|node_modules|[A-Za-z]:[\\/]|\.(ts|js|json|sql|db):[0-9]+|TypeError|ReferenceError|is not defined|Cannot read propert/i.test(msg) ||
+    msg.length > 250
+  ) {
+    return defaultFallback;
+  }
+  return msg;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
@@ -17,14 +29,21 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     if (!res.ok) {
       const errBody = await res.json().catch(() => ({}));
-      const err: any = new Error(errBody.error || `Request failed with status ${res.status}`);
+      const fallback = res.status >= 500
+        ? 'A server error occurred. Please try again later.'
+        : 'The request could not be processed. Please check your inputs.';
+      const cleanError = sanitizeErrorMessage(errBody.error, fallback);
+      const err: any = new Error(cleanError);
       err.status = res.status;
       throw err;
     }
     return (await res.json()) as T;
   } catch (error: any) {
     if (!(endpoint === '/auth/me' && error?.status === 401)) {
-      console.warn(`[SQL API] ${options.method || 'GET'} ${endpoint} failed:`, error.message);
+      console.warn(`[SQL API] ${options.method || 'GET'} ${endpoint} failed`);
+    }
+    if (error?.message && /Failed to fetch|NetworkError|Load failed/i.test(error.message)) {
+      error.message = 'Unable to connect to the server. Please check your connection and try again.';
     }
     throw error;
   }
