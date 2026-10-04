@@ -23,7 +23,6 @@ import {
   Download,
   Layers,
   Video,
-  Sparkles,
   Phone,
   Mail,
   MapPin,
@@ -1178,7 +1177,6 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
                           {/* Newly Saved Ribbon */}
                           {isNewlyHighlighted && (
                             <div className="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded bg-[#CA0765] text-white text-[10px] font-bold shadow-md flex items-center gap-1">
-                              <Sparkles className="w-3 h-3 text-amber-300" />
                               <span>Newly Saved to Wishlist</span>
                             </div>
                           )}

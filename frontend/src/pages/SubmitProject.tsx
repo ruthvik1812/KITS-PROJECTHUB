@@ -32,7 +32,6 @@ import {
   Layers,
   Lock,
   Image as ImageIcon,
-  Sparkles,
   Palette,
   Presentation
 } from 'lucide-react';
@@ -1048,7 +1047,6 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                 <div className="lg:col-span-6 flex flex-col items-center justify-center bg-white p-4 rounded-[6px] border border-slate-200 shadow-2xs">
                   <div className="w-full flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-[#19232B] uppercase tracking-wider flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5 text-[#CA0765]" />
                       <span>{cardImageMode === 'plain' ? 'Plain Card Preview' : 'Card Live Preview'}</span>
                     </span>
 

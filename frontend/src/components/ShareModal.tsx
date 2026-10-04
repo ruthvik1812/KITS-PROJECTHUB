@@ -11,8 +11,7 @@ import {
   Mail,
   Smartphone,
   Eye,
-  ExternalLink,
-  Sparkles
+  ExternalLink
 } from 'lucide-react';
 import { useApp, useAuth } from '../context/AppContext';
 

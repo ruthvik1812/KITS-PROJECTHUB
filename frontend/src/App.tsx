@@ -12,7 +12,7 @@ import { MyGroupProject } from './pages/MyGroupProject';
 import { SubmitProject } from './pages/SubmitProject';
 import { SignInPage } from './pages/SignIn';
 import { Project } from './types';
-import { CheckCircle2, Sparkles, X, Bookmark } from 'lucide-react';
+import { CheckCircle2, X, Bookmark } from 'lucide-react';
 
 function AppContent() {
   const { refreshProjects } = useApp();
@@ -163,7 +163,6 @@ function AppContent() {
             <div className="text-xs flex-1">
               <div className="font-bold text-white flex items-center gap-1.5">
                 <span>Published &amp; Live Immediately</span>
-                <Sparkles className="w-3.5 h-3.5 text-[#CA0765]" />
               </div>
               <p className="text-slate-300 mt-0.5 leading-relaxed">{toastMessage}</p>
             </div>
