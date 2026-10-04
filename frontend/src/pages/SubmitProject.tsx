@@ -150,10 +150,10 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
 
   const currentDept = (departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).find((d) => d.id === departmentId);
   const [facultyMentorName, setFacultyMentorName] = useState(
-    editingProject?.faculty_mentor_name || currentDept?.hodName || 'HOD'
+    editingProject?.faculty_mentor_name || ''
   );
   const [facultyMentorRole, setFacultyMentorRole] = useState(
-    editingProject?.faculty_mentor_role || `Professor & HOD · ${currentDept?.code || ''}`
+    editingProject?.faculty_mentor_role || ''
   );
 
   // Group and members state for Group Projects
@@ -463,8 +463,8 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
           presentationUrl: presentationUrl.trim() || undefined,
           thumbnail: projectCardImage.trim() || undefined,
           screenshots: projectCardImage.trim() ? [projectCardImage.trim()] : [],
-          facultyMentorName: submissionType === 'individual' ? undefined : (facultyMentorName.trim() || 'Dr. M. Ravindra Babu'),
-          facultyMentorRole: submissionType === 'individual' ? undefined : (facultyMentorRole.trim() || 'Professor & HOD · CSE'),
+          facultyMentorName: submissionType === 'individual' ? undefined : (facultyMentorName.trim() || undefined),
+          facultyMentorRole: submissionType === 'individual' ? undefined : (facultyMentorRole.trim() || undefined),
           tools: parsedTools,
           members: submissionType === 'group' ? members.map((m) => ({
             name: m.name.trim(),
@@ -523,8 +523,8 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
           presentationUrl: presentationUrl.trim() || undefined,
           thumbnail: projectCardImage.trim() || undefined,
           screenshots: projectCardImage.trim() ? [projectCardImage.trim()] : [],
-          facultyMentorName: submissionType === 'individual' ? undefined : (facultyMentorName.trim() || 'Dr. M. Ravindra Babu'),
-          facultyMentorRole: submissionType === 'individual' ? undefined : (facultyMentorRole.trim() || 'Professor & HOD · CSE'),
+          facultyMentorName: submissionType === 'individual' ? undefined : (facultyMentorName.trim() || undefined),
+          facultyMentorRole: submissionType === 'individual' ? undefined : (facultyMentorRole.trim() || undefined),
           tools: parsedTools,
           members: submissionType === 'group' ? members.map((m) => ({
             name: m.name.trim(),
@@ -1669,7 +1669,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                         <input
                           type="text"
                           required
-                          placeholder="e.g. A. Rahul"
+                          placeholder="Full Name"
                           value={mem.name}
                           onChange={(e) => handleMemberChange(idx, 'name', e.target.value)}
                           className={`w-full px-2.5 py-1.5 text-xs border rounded bg-white ${errors[`memberName_${idx}`] ? 'border-rose-500' : 'border-[#D5D5D5]'
@@ -1748,7 +1748,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Dr. M. Ravindra Babu"
+                    placeholder="Faculty mentor full name"
                     value={facultyMentorName}
                     onChange={(e) => setFacultyMentorName(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] focus:outline-none focus:border-[#0070C2] font-semibold text-[#19232B]"
@@ -1762,7 +1762,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Professor & HOD · CSE"
+                    placeholder="Designation & department"
                     value={facultyMentorRole}
                     onChange={(e) => setFacultyMentorRole(e.target.value)}
                     className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] focus:outline-none focus:border-[#0070C2] text-[#19232B]"
