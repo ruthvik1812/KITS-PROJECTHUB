@@ -1252,7 +1252,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                 </label>
                 <input
                   type="url"
-                  placeholder={submissionType === 'individual' ? "Optional: https://docs.google.com/presentation/..." : "https://docs.google.com/presentation/..."}
+                  placeholder={submissionType === 'individual' ? "Optional: https://..." : "https://..."}
                   value={presentationUrl}
                   onChange={(e) => setPresentationUrl(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] focus:outline-none focus:border-[#D83B01]"
@@ -1390,8 +1390,8 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                     <input
                       type="url"
                       placeholder={submissionType === 'individual'
-                        ? "Optional: e.g. https://docs.google.com/presentation/d/... (leave blank if none)"
-                        : "e.g. https://docs.google.com/presentation/d/... or https://onedrive.live.com/... (Google Slides, Microsoft PowerPoint Online, OneDrive, Canva, SharePoint)"}
+                        ? "Optional: https://... (leave blank if none)"
+                        : "https://..."}
                       value={presentationUrl}
                       onChange={(e) => {
                         setPresentationUrl(e.target.value);
@@ -1402,9 +1402,8 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                     />
                     <Presentation className="w-4 h-4 text-[#D83B01] absolute left-3 top-3 pointer-events-none" />
                   </div>
-                  <div className="flex flex-wrap items-center justify-between text-[11px] text-[#757F95]">
-                    <span>Paste view/share link from Google Slides, Microsoft PowerPoint Online, OneDrive, Canva, or SharePoint.</span>
-                    {presentationUrl && (
+                  {presentationUrl && (
+                    <div className="flex justify-end text-[11px] text-[#757F95]">
                       <a
                         href={presentationUrl}
                         target="_blank"
@@ -1414,8 +1413,8 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                         <ExternalLink className="w-3 h-3" />
                         <span>Test Link</span>
                       </a>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
