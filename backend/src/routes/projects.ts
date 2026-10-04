@@ -352,6 +352,31 @@ router.post('/', authenticate, (req: Request, res: Response) => {
           INSERT INTO official_groups (id, name, department_id, academic_year, leader_id, status, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, 'confirmed', ?, ?)
         `).run(finalGroupId, title.trim() + ' Team', departmentId, academicYear, user.id, new Date().toISOString(), new Date().toISOString());
+
+        // Also record leader into official_group_members
+        const leaderRoll = (user.student_roll_number || '').trim().toUpperCase();
+        try {
+          db.prepare(`
+            INSERT INTO official_group_members (id, group_id, user_id, student_roll_number, invite_status, joined_at, created_at)
+            VALUES (?, ?, ?, ?, 'accepted', ?, ?)
+          `).run(`mem-${Date.now()}-ldr`, finalGroupId, user.id, leaderRoll, new Date().toISOString(), new Date().toISOString());
+        } catch {}
+
+        // Link registered students for remaining group members
+        for (const m of finalMembersList) {
+          const mRoll = (m.rollNumber || '').trim().toUpperCase();
+          if (mRoll && mRoll !== leaderRoll) {
+            const regUser = db.prepare(`SELECT id FROM users WHERE UPPER(student_roll_number) = ?`).get(mRoll) as any;
+            if (regUser) {
+              try {
+                db.prepare(`
+                  INSERT INTO official_group_members (id, group_id, user_id, student_roll_number, invite_status, joined_at, created_at)
+                  VALUES (?, ?, ?, ?, 'accepted', ?, ?)
+                `).run(`mem-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, finalGroupId, regUser.id, mRoll, new Date().toISOString(), new Date().toISOString());
+              } catch {}
+            }
+          }
+        }
       }
 
       if (finalMembersList.length < 4 || finalMembersList.length > 6) {

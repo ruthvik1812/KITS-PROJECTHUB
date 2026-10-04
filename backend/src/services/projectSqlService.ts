@@ -167,13 +167,13 @@ export function getMyProjects(userId: string, rollNumber?: string, role?: string
       (p.submission_type = 'individual' AND p.owner_user_id = ?)
       OR (p.submission_type = 'group' AND g.leader_id = ?)
       OR (p.submission_type = 'group' AND m.user_id = ?)
-      ${cleanRoll ? "OR (p.submission_type = 'group' AND m.student_roll_number = ?)" : ''}
+      ${cleanRoll ? "OR (p.submission_type = 'group' AND (m.student_roll_number = ? OR UPPER(p.original_authors) LIKE ?))" : ''}
     )
     ORDER BY p.created_at DESC
   `;
 
   const params: any[] = cleanRoll
-    ? [userId, userId, userId, cleanRoll]
+    ? [userId, userId, userId, cleanRoll, `%"${cleanRoll}"%`]
     : [userId, userId, userId];
 
   const rows = db.prepare(query).all(...params) as any[];
@@ -336,6 +336,21 @@ export function formatProjectRecord(row: any) {
         };
       }
     } catch {}
+  }
+
+  if (confirmedMembers.length === 0 && row.original_authors) {
+    const authors = parseJsonSafe(row.original_authors, []);
+    if (Array.isArray(authors) && authors.length > 0) {
+      confirmedMembers = authors.map((a: any) => ({
+        userId: a.userId || null,
+        rollNumber: a.rollNumber || null,
+        fullName: a.name || 'Team Member',
+        isLeader: (a.role || '').toLowerCase().includes('leader')
+      }));
+      if (groupDetails) {
+        groupDetails.confirmed_members = confirmedMembers;
+      }
+    }
   }
 
   // Resolve uploader display name
