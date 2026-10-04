@@ -50,7 +50,39 @@ try {
 
   console.log('✓ All database tables and columns (including presentation_url) verified successfully:', tableNames.filter(t => !t.startsWith('sqlite_')).join(', '));
   console.log('✓ GitHub validator unit tests passed cleanly (valid repos normalized, invalid/generic repos rejected).');
-  console.log('✓ Verification tests passed cleanly.');
+
+  // Test Error Sanitizer & Handler
+  const { isSensitiveError, sanitizeClientErrorMessage } = await import('../src/middleware/errorHandler.js');
+
+  // Verify detection of sensitive errors
+  if (!isSensitiveError('SqliteError: UNIQUE constraint failed: users.email')) {
+    throw new Error('Failed to detect SQLite UNIQUE constraint error as sensitive');
+  }
+  if (!isSensitiveError('SqliteError: near "SELECT": syntax error in E:\\kits-projecthub\\backend\\src\\db\\database.ts:42')) {
+    throw new Error('Failed to detect SQL syntax error / file path as sensitive');
+  }
+  if (!isSensitiveError('Error: ENOENT: no such file or directory, open \'C:\\Users\\admin\\file.pdf\'')) {
+    throw new Error('Failed to detect filesystem path error as sensitive');
+  }
+  if (!isSensitiveError('    at Module._compile (internal/modules/cjs/loader.js:723:30)')) {
+    throw new Error('Failed to detect stack trace as sensitive');
+  }
+
+  // Verify safe validation errors pass through cleanly
+  const safeMsg = 'Full Name must be at least 2 characters.';
+  if (sanitizeClientErrorMessage(new Error(safeMsg), 'Fallback') !== safeMsg) {
+    throw new Error('Safe validation message was incorrectly altered');
+  }
+
+  // Verify sensitive errors are sanitized to fallback
+  const fallback = 'Registration failed. Please check your details and try again.';
+  const sanitized = sanitizeClientErrorMessage(new Error('SqliteError: table users has no column named pw'), fallback);
+  if (sanitized !== fallback) {
+    throw new Error(`Sensitive error leaked: ${sanitized}`);
+  }
+  console.log('✓ Error sanitization tests passed cleanly (stack traces, file paths, and SQLite details shielded).');
+
+  console.log('✓ All verification tests passed cleanly.');
   process.exit(0);
 } catch (err: any) {
   console.error('✗ Verification test failed:', err.message);

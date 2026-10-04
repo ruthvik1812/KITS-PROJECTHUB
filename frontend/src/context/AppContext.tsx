@@ -8,7 +8,9 @@ import {
   ProjectPrivateData,
   LearnerPracticeRecord,
   ProjectDiscussionPost,
+  Department,
 } from '../types';
+import { kitsCollegeConfig } from '../config/collegeConfig';
 import {
   fetchAuthMe,
   logoutUser,
@@ -18,6 +20,9 @@ import {
   quickLogin,
   verifyStudentRollNumber as apiVerifyRoll,
   fetchProjects as apiFetchProjects,
+  fetchDepartments,
+  recordProjectView,
+  recordProjectShare,
   fetchWishlistIds,
   addToWishlist as apiAddToWishlist,
   removeFromWishlist as apiRemoveFromWishlist,
@@ -90,7 +95,8 @@ export interface AppContextType extends AuthContextType {
     rubric?: ReviewRubric
   ) => Promise<void>;
   toggleLike: (projectId: string) => void;
-  recordView: (projectId: string) => void;
+  recordView: (projectId: string) => Promise<number | undefined>;
+  recordShare: (projectId: string, shareType?: string) => Promise<number | undefined>;
   fetchPrivateProjectData: (projectId: string) => Promise<ProjectPrivateData | null>;
   getProjectById: (id: string) => Project | undefined;
 
@@ -109,7 +115,102 @@ export interface AppContextType extends AuthContextType {
   isDemoBannerVisible: boolean;
   dismissDemoBanner: () => void;
   resetDemoData: () => void;
+
+  // Academic Departments
+  departments: Department[];
+  refreshDepartments: () => Promise<void>;
 }
+
+export const DEFAULT_DEPARTMENTS: Department[] = [
+  {
+    id: 'aiml',
+    code: 'CSM',
+    name: 'Artificial Intelligence and Machine Learning',
+    shortName: 'AI & ML',
+    icon: 'Brain',
+    description: 'Deep neural networks, computer vision, multilingual NLP, autonomous robotics, and edge inference pipelines.',
+    hodName: 'Dr. S. Ramesh Kumar',
+    hodEmail: 'hod.aiml@kitsts.ac.in',
+    labsCount: 5,
+  },
+  {
+    id: 'cse',
+    code: 'CSE',
+    name: 'Computer Science and Engineering',
+    shortName: 'CSE',
+    icon: 'Cpu',
+    description: 'Core computing, distributed algorithms, systems engineering, cryptography, and cloud platforms.',
+    hodName: 'Dr. P. Niranjan',
+    hodEmail: 'hod.cse@kitsts.ac.in',
+    labsCount: 7,
+  },
+  {
+    id: 'ece',
+    code: 'ECE',
+    name: 'Electronics and Communication Engineering',
+    shortName: 'ECE',
+    icon: 'Radio',
+    description: 'VLSI architectures, embedded IoT telemetry, FPGA accelerator design, signal processing, and antenna arrays.',
+    hodName: 'Dr. B. Rama Devi',
+    hodEmail: 'hod.ece@kitsts.ac.in',
+    labsCount: 6,
+  },
+  {
+    id: 'eee',
+    code: 'EEE',
+    name: 'Electrical and Electronics Engineering',
+    shortName: 'EEE',
+    icon: 'Zap',
+    description: 'Renewable energy microgrids, EV powertrains, bidirectional fast chargers, and high-voltage simulation.',
+    hodName: 'Dr. C. Venkatesh',
+    hodEmail: 'hod.eee@kitsts.ac.in',
+    labsCount: 4,
+  },
+  {
+    id: 'me',
+    code: 'ME',
+    name: 'Mechanical Engineering',
+    shortName: 'Mechanical',
+    icon: 'Cog',
+    description: 'Robotics chassis, additive manufacturing, thermofluids, multi-axis robotic arms, and CAD/CAM.',
+    hodName: 'Dr. K. Sridhar',
+    hodEmail: 'hod.mech@kitsts.ac.in',
+    labsCount: 6,
+  },
+  {
+    id: 'it',
+    code: 'IT',
+    name: 'Information Technology',
+    shortName: 'IT',
+    icon: 'Layers',
+    description: 'Cybersecurity, fullstack engineering, database systems, DevOps, and mobile networks.',
+    hodName: 'Dr. T. Senthil Murugan',
+    hodEmail: 'hod.it@kitsts.ac.in',
+    labsCount: 4,
+  },
+  {
+    id: 'civil',
+    code: 'CIVIL',
+    name: 'Civil Engineering',
+    shortName: 'Civil',
+    icon: 'Building2',
+    description: 'Structural health monitoring, sustainable geopolymer concrete, GIS hydrological modeling, and smart urban infrastructure.',
+    hodName: 'Dr. T. Narsimha Reddy',
+    hodEmail: 'hod.civil@kitsts.ac.in',
+    labsCount: 6,
+  },
+  {
+    id: 'ds',
+    code: 'CSE (DS)',
+    name: 'CSE Data Science',
+    shortName: 'CSE Data Science',
+    icon: 'BarChart3',
+    description: 'Big data telemetry pipelines, predictive Bayesian statistics, high-dimensional anomaly detection, and business intelligence.',
+    hodName: 'Dr. V. Rajeshwari',
+    hodEmail: 'hod.ds@kitsts.ac.in',
+    labsCount: 4,
+  },
+];
 
 const defaultAnonymousUser: UserProfile = {
   uid: 'guest-visitor',
@@ -138,6 +239,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDemoBannerVisible, setIsDemoBannerVisible] = useState<boolean>(() => {
     return localStorage.getItem(BANNER_STORAGE_KEY) !== 'true';
   });
+  const [departments, setDepartments] = useState<Department[]>(DEFAULT_DEPARTMENTS);
+
+  const refreshDepartments = async () => {
+    try {
+      const data = await fetchDepartments();
+      if (Array.isArray(data) && data.length > 0) {
+        const merged: Department[] = data.map((d: any) => {
+          const fallback = DEFAULT_DEPARTMENTS.find(
+            (def) => def.id.toLowerCase() === d.id.toLowerCase()
+          );
+          return {
+            id: d.id,
+            code: d.code || fallback?.code || d.id.toUpperCase(),
+            name: d.name || fallback?.name || d.id,
+            shortName: d.short_name || d.shortName || fallback?.shortName || d.code || d.id.toUpperCase(),
+            icon: d.icon || fallback?.icon || 'Building2',
+            description: d.description || fallback?.description || '',
+            hodName: d.hod_name || d.hodName || fallback?.hodName || '',
+            hodEmail: d.hod_email || d.hodEmail || fallback?.hodEmail || '',
+            labsCount: typeof d.labs_count === 'number' ? d.labs_count : (d.labsCount || fallback?.labsCount || 0),
+          };
+        });
+
+        DEFAULT_DEPARTMENTS.forEach((def) => {
+          if (!merged.some((m) => m.id.toLowerCase() === def.id.toLowerCase())) {
+            merged.push(def);
+          }
+        });
+
+        setDepartments(merged);
+        kitsCollegeConfig.departments = merged;
+      }
+    } catch (err) {
+      console.warn('Failed to load departments from API, using defaults:', err);
+      kitsCollegeConfig.departments = DEFAULT_DEPARTMENTS;
+    }
+  };
 
   // 1. Load active session on boot from /api/auth/me
   const loadUserSession = async () => {
@@ -187,13 +325,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
+    kitsCollegeConfig.departments = DEFAULT_DEPARTMENTS;
     loadUserSession();
+    refreshDepartments();
   }, []);
 
-  // 2. Load and refresh projects from backend SQL repository
+  // 2. Load and refresh projects from backend SQL repository (unlimited queries)
   const refreshProjects = async () => {
     try {
-      const data = await apiFetchProjects({ limit: 200 });
+      const data = await apiFetchProjects({ unlimited: true });
       if (data && Array.isArray(data.projects)) {
         const mapped: Project[] = data.projects.map((p: any) => {
           const submissionType = p.submission_type || p.submissionType || (p.official_group_id ? 'group' : 'individual');
@@ -544,16 +684,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  // Project view counter
-  const recordView = (projectId: string) => {
+  // Project view counter with backend synchronization (Instagram style)
+  const recordView = async (projectId: string): Promise<number | undefined> => {
+    try {
+      const res = await recordProjectView(projectId);
+      if (res && typeof res.views_count === 'number') {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId
+              ? { ...p, viewsCount: res.views_count, views_count: res.views_count }
+              : p
+          )
+        );
+        return res.views_count;
+      }
+    } catch (err) {
+      console.warn('View record notice:', err);
+    }
     setProjects((prev) =>
       prev.map((p) => {
         if (p.id === projectId) {
-          return { ...p, viewsCount: p.viewsCount + 1 };
+          const next = (p.viewsCount || 0) + 1;
+          return { ...p, viewsCount: next, views_count: next };
         }
         return p;
       })
     );
+  };
+
+  // Project share counter with backend synchronization (Instagram style)
+  const recordShare = async (projectId: string, shareType: string = 'share'): Promise<number | undefined> => {
+    try {
+      const res = await recordProjectShare(projectId, shareType);
+      if (res && typeof res.shares_count === 'number') {
+        setProjects((prev) =>
+          prev.map((p) =>
+            p.id === projectId
+              ? { ...p, sharesCount: res.shares_count, shares_count: res.shares_count }
+              : p
+          )
+        );
+        return res.shares_count;
+      }
+    } catch (err) {
+      console.warn('Share record notice:', err);
+    }
+    let updatedCount: number | undefined;
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.id === projectId) {
+          const next = (p.sharesCount || 0) + 1;
+          updatedCount = next;
+          return { ...p, sharesCount: next, shares_count: next };
+        }
+        return p;
+      })
+    );
+    return updatedCount;
   };
 
   const getProjectById = (id: string): Project | undefined => {
@@ -798,6 +985,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       submitFacultyReview,
       toggleLike,
       recordView,
+      recordShare,
       fetchPrivateProjectData,
       getProjectById,
 
@@ -826,6 +1014,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isDemoBannerVisible,
       dismissDemoBanner,
       resetDemoData,
+
+      // Departments
+      departments,
+      refreshDepartments,
     }),
     [
       currentUser,
@@ -838,6 +1030,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isMembershipApproved,
       allUsers,
       projects,
+      departments,
       isFirestoreConnected,
       wishlistIds,
       pendingWishlistId,

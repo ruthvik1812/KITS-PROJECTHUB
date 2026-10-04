@@ -144,4 +144,30 @@ CREATE TABLE IF NOT EXISTS wishlists (
 CREATE INDEX IF NOT EXISTS idx_wishlist_user ON wishlists(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_wishlist_project ON wishlists(project_id);
 
+-- 9. Project Ratings
+CREATE TABLE IF NOT EXISTS project_ratings (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    score INTEGER NOT NULL CHECK (score >= 1 AND score <= 5),
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(project_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ratings_project ON project_ratings(project_id);
+CREATE INDEX IF NOT EXISTS idx_ratings_user ON project_ratings(user_id);
+
+-- 10. Project Comments
+CREATE TABLE IF NOT EXISTS project_comments (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text TEXT NOT NULL,
+    is_edited INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_comments_project ON project_comments(project_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user ON project_comments(user_id);
+
 

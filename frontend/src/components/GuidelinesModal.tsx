@@ -25,10 +25,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
         <span className="kits-cyan-corner-br" />
 
         {/* Header */}
-        <div className="bg-[#F6F6F7] border-b border-[#D5D5D5] px-6 py-4 flex items-center justify-between">
+        <div className="bg-[#F6F6F7] border-b border-[#D5D5D5] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <FileText className="w-5 h-5 text-[#CA0765]" />
-            <h2 className="font-heading font-bold text-xl text-[#19232B]">
+            <h2 className="font-heading font-bold text-lg sm:text-xl text-[#19232B]">
               KITS Project Submission Guidelines
             </h2>
           </div>
@@ -42,7 +42,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-5 text-sm text-[#19232B] leading-relaxed">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-sm text-[#19232B] leading-relaxed">
           <p className="text-xs text-[#757F95]">
             All undergraduate engineering students of Kamala Institute of Technology and Science must adhere to the following standards prior to submitting capstones or mini projects for departmental scrutiny.
           </p>
@@ -91,10 +91,10 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-[#F6F6F7] border-t border-[#D5D5D5] px-6 py-4 flex items-center justify-between gap-3">
+        <div className="bg-[#F6F6F7] border-t border-[#D5D5D5] px-4 sm:px-6 py-3.5 sm:py-4 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
           <button
             onClick={onClose}
-            className="text-xs font-semibold text-[#757F95] hover:text-[#19232B]"
+            className="text-xs font-semibold text-[#757F95] hover:text-[#19232B] text-center sm:text-left py-1 sm:py-0"
           >
             Dismiss
           </button>
@@ -103,7 +103,7 @@ export const GuidelinesModal: React.FC<GuidelinesModalProps> = ({
               onClose();
               onNavigateSubmit();
             }}
-            className="px-5 py-2 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
+            className="px-5 py-2.5 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm text-center w-full sm:w-auto"
           >
             Proceed to Submit Project
           </button>

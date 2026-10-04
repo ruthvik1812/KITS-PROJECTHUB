@@ -17,12 +17,14 @@ export interface ProjectFilters {
   ownerUserId?: string;
   page?: number;
   limit?: number;
+  unlimited?: boolean;
 }
 
 export function getAllProjects(filters: ProjectFilters = {}) {
+  const isUnlimited = Boolean(filters.unlimited || filters.limit === -1 || filters.limit === 0);
   const page = Math.max(1, filters.page || 1);
-  const limit = Math.max(1, Math.min(500, filters.limit || 100));
-  const offset = (page - 1) * limit;
+  const limit = isUnlimited ? -1 : Math.max(1, filters.limit || 100);
+  const offset = isUnlimited ? 0 : (page - 1) * (filters.limit || 100);
 
   let query = `SELECT * FROM projects WHERE status = 'approved'`;
   const params: any[] = [];
@@ -88,8 +90,12 @@ export function getAllProjects(filters: ProjectFilters = {}) {
   const countStmt = db.prepare(countQuery);
   const total = (countStmt.get(...params) as { total: number }).total;
 
-  query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
-  params.push(limit, offset);
+  if (!isUnlimited) {
+    query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+  } else {
+    query += ` ORDER BY created_at DESC`;
+  }
 
   const stmt = db.prepare(query);
   const rows = stmt.all(...params) as any[];
@@ -101,9 +107,9 @@ export function getAllProjects(filters: ProjectFilters = {}) {
     projects,
     pagination: {
       page,
-      limit,
+      limit: isUnlimited ? total : limit,
       total,
-      totalPages: Math.ceil(total / limit)
+      totalPages: isUnlimited ? 1 : Math.ceil(total / limit)
     }
   };
 }
@@ -424,10 +430,9 @@ function parseJsonSafe(str: any, fallback: any) {
 }
 
 /**
- * Records a deduplicated view for a published project.
- * Deduplication rule: At most one view per viewer_key per project within 24 hours.
- * Viewer key: 'user:<id>' for signed-in students, or 'anon:<visitor_id>' for guests.
- * Only published projects (status = 'approved') count views.
+ * Records an Instagram-style view for a project.
+ * Deduplication: Short session cooldown (5 seconds per viewer) to prevent burst spamming,
+ * while allowing repeat visits, page loads, and browsing sessions to increment views smoothly.
  */
 export function recordProjectView(projectId: string, viewerKey: string) {
   const project = db.prepare(`SELECT id, status, views_count FROM projects WHERE id = ?`).get(projectId) as any;
@@ -435,12 +440,7 @@ export function recordProjectView(projectId: string, viewerKey: string) {
     throw new Error('Project not found');
   }
 
-  // Only approved/published projects accumulate views
-  if (project.status !== 'approved') {
-    return { counted: false, views_count: project.views_count || 0 };
-  }
-
-  // Check 24-hour window
+  // Check recent view cooldown (5s per viewer session to allow repeat visits to count while deduplicating immediate double clicks)
   const recentView = db.prepare(`
     SELECT id, viewed_at 
     FROM project_views 
@@ -450,9 +450,9 @@ export function recordProjectView(projectId: string, viewerKey: string) {
 
   if (recentView) {
     const elapsed = Date.now() - new Date(recentView.viewed_at).getTime();
-    const twentyFourHours = 24 * 60 * 60 * 1000;
-    if (elapsed < twentyFourHours) {
-      // Deduplicated within 24 hours — do not increment
+    const sessionCooldown = 5 * 1000; // 5 seconds
+    if (elapsed < sessionCooldown) {
+      // Deduplicated within 5-second session cooldown window
       return { counted: false, views_count: project.views_count || 0 };
     }
   }
@@ -482,9 +482,9 @@ export function recordProjectView(projectId: string, viewerKey: string) {
 }
 
 /**
- * Records a share-action event for a published project.
- * Deduplicates repeated clicks from the same viewer within a short cooldown (30s)
- * to prevent inflating counts via rapid repeated clicks.
+ * Records an Instagram-style share event for a project.
+ * Short 2-second cooldown per sharer on the same project prevents rapid button spam,
+ * but allows consecutive shares across platforms (WhatsApp, Telegram, Copy Link, etc.).
  */
 export function recordProjectShare(projectId: string, sharerKey: string, shareType: string = 'share') {
   const project = db.prepare(`SELECT id, status, shares_count FROM projects WHERE id = ?`).get(projectId) as any;
@@ -492,11 +492,7 @@ export function recordProjectShare(projectId: string, sharerKey: string, shareTy
     throw new Error('Project not found');
   }
 
-  if (project.status !== 'approved') {
-    return { counted: false, shares_count: project.shares_count || 0 };
-  }
-
-  // Rate-limiting check: 30 seconds cooldown per sharer on the same project
+  // Rate-limiting check: 2 seconds cooldown per sharer on the same project
   const recentShare = db.prepare(`
     SELECT id, shared_at 
     FROM project_shares 
@@ -506,7 +502,7 @@ export function recordProjectShare(projectId: string, sharerKey: string, shareTy
 
   if (recentShare) {
     const elapsed = Date.now() - new Date(recentShare.shared_at).getTime();
-    if (elapsed < 30 * 1000) {
+    if (elapsed < 2 * 1000) {
       return { counted: false, shares_count: project.shares_count || 0 };
     }
   }

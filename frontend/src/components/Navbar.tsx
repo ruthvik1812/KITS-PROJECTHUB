@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenHelp,
   onOpenContact,
 }) => {
-  const { projects, wishlistIds } = useApp();
+  const { projects, wishlistIds, departments } = useApp();
   const {
     currentUser,
     isAuthenticated,
@@ -43,6 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileDeptsOpen, setMobileDeptsOpen] = useState(false);
+  const [mobileBatchesOpen, setMobileBatchesOpen] = useState(false);
 
   // Dropdown states
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -127,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             : 'bg-[#F6F6F7] border-b border-[#D5D5D5]'
         }`}
       >
-        <div className="kits-container flex items-center justify-between h-[87px]">
+        <div className="kits-container flex items-center justify-between h-[72px] sm:h-[80px] lg:h-[87px]">
           {/* Left: KITS Official University Logo */}
           <div
             onClick={() => handleNav('home')}
@@ -152,10 +154,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <div className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 shrink-0">
             <button
               onClick={() => handleNav('home')}
-              className={`px-3 py-2 nav-link-text rounded-[4px] transition-colors ${
+              className={`px-2.5 xl:px-3 py-2 text-xs xl:text-sm font-semibold rounded-[4px] transition-colors ${
                 activePage === 'home'
                   ? 'text-[#CA0765] font-bold border-b-2 border-[#CA0765]'
                   : 'text-[#19232B] hover:text-[#CA0765]'
@@ -166,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => handleNav('explore')}
-              className={`px-3 py-2 nav-link-text rounded-[4px] transition-colors ${
+              className={`px-2.5 xl:px-3 py-2 text-xs xl:text-sm font-semibold rounded-[4px] transition-colors ${
                 activePage === 'explore'
                   ? 'text-[#CA0765] font-bold border-b-2 border-[#CA0765]'
                   : 'text-[#19232B] hover:text-[#CA0765]'
@@ -184,7 +186,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={() => toggleDropdown('departments')}
                 aria-expanded={openDropdown === 'departments'}
-                className="px-3 py-2 nav-link-text text-[#19232B] hover:text-[#0070C2] flex items-center gap-1 rounded-[4px] transition-colors"
+                className="px-2 xl:px-3 py-2 text-xs xl:text-sm font-semibold text-[#19232B] hover:text-[#0070C2] flex items-center gap-1 rounded-[4px] transition-colors"
               >
                 <span>Departments</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-70" />
@@ -198,7 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="px-3 py-1.5 text-[11px] font-bold text-white/70 uppercase tracking-wider border-b border-blue-500/50">
                     B.Tech Disciplines
                   </div>
-                  {kitsCollegeConfig.departments.map((dept) => (
+                  {(departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).map((dept) => (
                     <button
                       key={dept.id}
                       onClick={() => {
@@ -227,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={() => toggleDropdown('batches')}
                 aria-expanded={openDropdown === 'batches'}
-                className="px-3 py-2 nav-link-text text-[#19232B] hover:text-[#0070C2] flex items-center gap-1 rounded-[4px] transition-colors"
+                className="px-2 xl:px-3 py-2 text-xs xl:text-sm font-semibold text-[#19232B] hover:text-[#0070C2] flex items-center gap-1 rounded-[4px] transition-colors"
               >
                 <span>Batches</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-70" />
@@ -261,7 +263,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* My Projects */}
             <button
               onClick={() => handleNav('my-group')}
-              className={`px-3 py-2 nav-link-text rounded-[4px] transition-colors ${
+              className={`px-2.5 xl:px-3 py-2 text-xs xl:text-sm font-semibold rounded-[4px] transition-colors ${
                 (activePage === 'my-group' || activePage === 'my-projects')
                   ? 'text-[#CA0765] font-bold border-b-2 border-[#CA0765]'
                   : 'text-[#19232B] hover:text-[#CA0765]'
@@ -279,9 +281,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   handleNav('submit');
                 }
               }}
-              className="ml-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-[14px] font-semibold tracking-wide shadow-sm hover:shadow transition-all active:scale-98"
+              className="ml-1 xl:ml-2 inline-flex items-center gap-1 px-3 xl:px-3.5 py-2 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs xl:text-[13.5px] font-semibold tracking-wide shadow-sm hover:shadow transition-all active:scale-98 shrink-0"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
               <span>Create Project</span>
             </button>
 
@@ -388,12 +390,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Mobile Menu Hamburger Button */}
-          <div className="lg:hidden flex items-center gap-2">
+          {/* Mobile Menu Actions & Hamburger Button */}
+          <div className="lg:hidden flex items-center gap-1.5 sm:gap-2 shrink-0">
             {!isAuthenticated ? (
               <button
                 onClick={() => handleNav('signin')}
-                className="px-2.5 py-1.5 rounded-[4px] bg-[#0070C2] text-white text-xs font-bold"
+                className="hidden xs:inline-flex px-2.5 py-1.5 rounded-[4px] bg-[#0070C2] text-white text-xs font-bold shrink-0"
               >
                 Sign In
               </button>
@@ -401,13 +403,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => handleNav('submit')}
-              className="px-3 py-1.5 rounded-[4px] bg-[#CA0765] text-white text-xs font-semibold"
+              className="px-2.5 sm:px-3 py-1.5 rounded-[4px] bg-[#CA0765] text-white text-xs font-semibold shrink-0"
             >
               Submit
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-[4px] text-[#19232B] hover:bg-slate-200"
+              className="p-1.5 sm:p-2 rounded-[4px] text-[#19232B] hover:bg-slate-200 transition-colors"
               aria-label="Toggle navigation drawer"
               aria-expanded={mobileMenuOpen}
             >
@@ -418,7 +420,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-[#D5D5D5] bg-[#F6F6F7] px-4 py-4 space-y-3">
+          <div className="lg:hidden border-t border-[#D5D5D5] bg-[#F6F6F7] px-4 py-4 space-y-3 max-h-[calc(100vh-80px)] overflow-y-auto">
             <div className="pb-3 border-b border-[#D5D5D5] flex items-center justify-between">
               <KitsLogo size="sm" />
               <span className="text-[10px] font-bold text-[#757F95] uppercase tracking-wider">
@@ -428,8 +430,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => handleNav('home')}
-              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] ${
-                activePage === 'home' ? 'bg-[#CA0765] text-white' : 'text-[#19232B]'
+              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] transition-colors ${
+                activePage === 'home' ? 'bg-[#CA0765] text-white' : 'text-[#19232B] hover:bg-slate-200'
               }`}
             >
               Home
@@ -437,17 +439,67 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => handleNav('explore')}
-              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] ${
-                activePage === 'explore' ? 'bg-[#CA0765] text-white' : 'text-[#19232B]'
+              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] transition-colors ${
+                activePage === 'explore' ? 'bg-[#CA0765] text-white' : 'text-[#19232B] hover:bg-slate-200'
               }`}
             >
               Explore Projects
             </button>
 
+            {/* Mobile Expandable Departments Accordion */}
+            <div className="border border-slate-200 rounded-[4px] bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMobileDeptsOpen(!mobileDeptsOpen)}
+                className="w-full text-left px-3 py-2.5 text-sm font-semibold text-[#19232B] flex items-center justify-between"
+              >
+                <span>Departments</span>
+                <ChevronDown className={`w-4 h-4 text-[#757F95] transition-transform ${mobileDeptsOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {mobileDeptsOpen && (
+                <div className="px-3 pb-2 pt-1 border-t border-slate-100 space-y-1">
+                  {(departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).map((dept) => (
+                    <button
+                      key={dept.id}
+                      onClick={() => handleNav('explore', dept.id)}
+                      className="w-full text-left px-2 py-1.5 text-xs text-slate-700 hover:text-[#CA0765] flex items-center justify-between"
+                    >
+                      <span className="truncate">{dept.code} — {dept.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Expandable Batches Accordion */}
+            <div className="border border-slate-200 rounded-[4px] bg-white overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMobileBatchesOpen(!mobileBatchesOpen)}
+                className="w-full text-left px-3 py-2.5 text-sm font-semibold text-[#19232B] flex items-center justify-between"
+              >
+                <span>Graduation Batches</span>
+                <ChevronDown className={`w-4 h-4 text-[#757F95] transition-transform ${mobileBatchesOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {mobileBatchesOpen && (
+                <div className="px-3 pb-2 pt-1 border-t border-slate-100 flex flex-wrap gap-1.5">
+                  {kitsCollegeConfig.graduationYears.map((year) => (
+                    <button
+                      key={year}
+                      onClick={() => handleNav('explore', `year-${year}`)}
+                      className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-[#0070C2] hover:text-white rounded transition-colors text-slate-800"
+                    >
+                      Class of {year}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => handleNav('my-group', 'tab:projects')}
-              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between ${
-                (activePage === 'my-group' || activePage === 'my-projects') ? 'bg-[#0070C2] text-white' : 'text-[#19232B]'
+              className={`w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between transition-colors ${
+                (activePage === 'my-group' || activePage === 'my-projects') ? 'bg-[#0070C2] text-white' : 'text-[#19232B] hover:bg-slate-200'
               }`}
             >
               <span>My Projects</span>
@@ -456,7 +508,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isAuthenticated && (
               <button
                 onClick={() => handleNav('my-group', 'tab:wishlist')}
-                className="w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between text-[#CA0765] hover:bg-pink-50"
+                className="w-full text-left px-3 py-2 text-sm font-semibold rounded-[4px] flex items-center justify-between text-[#CA0765] hover:bg-pink-50 transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <Bookmark className="w-4 h-4" />
@@ -470,6 +522,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* Quick Informational Links in Mobile Drawer */}
+            <div className="pt-2 border-t border-slate-200 flex flex-wrap gap-2 text-xs text-[#757F95]">
+              {onOpenGuidelines && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenGuidelines();
+                  }}
+                  className="px-2.5 py-1 rounded bg-slate-200 hover:bg-slate-300 text-[#19232B] font-medium"
+                >
+                  Guidelines
+                </button>
+              )}
+              {onOpenHelp && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenHelp();
+                  }}
+                  className="px-2.5 py-1 rounded bg-slate-200 hover:bg-slate-300 text-[#19232B] font-medium"
+                >
+                  Help
+                </button>
+              )}
+            </div>
+
             {isAuthenticated ? (
               <div className="pt-2 border-t border-slate-300 space-y-2">
                 <div className="text-xs text-[#757F95]">
@@ -477,7 +557,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
                 <button
                   onClick={signOut}
-                  className="w-full py-2 bg-rose-600 text-white text-xs font-bold rounded"
+                  className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded transition-colors"
                 >
                   Sign Out
                 </button>
@@ -488,7 +568,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setMobileMenuOpen(false);
                   handleNav('signin');
                 }}
-                className="w-full py-2 bg-[#0070C2] text-white text-xs font-bold rounded"
+                className="w-full py-2.5 bg-[#0070C2] hover:bg-[#005696] text-white text-xs font-bold rounded transition-colors"
               >
                 Sign In
               </button>

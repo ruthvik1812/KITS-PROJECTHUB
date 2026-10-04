@@ -1,23 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { useApp, useAuth } from '../context/AppContext';
 import { ShareModal } from './ShareModal';
-import { recordProjectShare } from '../services/apiClient';
 import {
   Users,
   User,
-  ExternalLink,
-  Globe,
-  Tag,
   ArrowUpRight,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  Github,
   FileText,
-  Video,
   Star,
-  Presentation,
   Eye,
   Share2,
   Bookmark
@@ -39,13 +29,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onNavigateWishlist,
   isHighlighted = false,
 }) => {
-  const { isProjectSaved, saveToWishlist } = useApp();
+  const { isProjectSaved, saveToWishlist, recordView, departments } = useApp();
   const { isAuthenticated } = useAuth();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [sharesCount, setSharesCount] = useState<number>(project.shares_count || project.sharesCount || 0);
   const viewsCount = project.views_count || project.viewsCount || 0;
   const isSaved = isProjectSaved(project.id);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setSharesCount(project.shares_count ?? project.sharesCount ?? 0);
+  }, [project.shares_count, project.sharesCount]);
 
   const handleCardClick = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -55,6 +49,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         return;
       }
     }
+    // Record view in real 
+    recordView(project.id).catch(() => { });
     onSelect(project);
   };
 
@@ -88,47 +84,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     }
   };
 
-  const handleShareClick = async (e: React.MouseEvent) => {
+  const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/?project=${encodeURIComponent(project.id)}`
-      : '';
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: project.title,
-          text: project.summary || 'Check out this engineering capstone on KITS ProjectHub!',
-          url: shareUrl,
-        });
-        recordProjectShare(project.id, 'native')
-          .then((res) => {
-            if (typeof res?.shares_count === 'number') {
-              setSharesCount(res.shares_count);
-            }
-          })
-          .catch(() => {});
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
+    if (!isAuthenticated) {
+      if (onNavigateSignIn) {
+        onNavigateSignIn();
       }
+      return;
     }
-
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        recordProjectShare(project.id, 'copy_link')
-          .then((res) => {
-            if (typeof res?.shares_count === 'number') {
-              setSharesCount(res.shares_count);
-            }
-          })
-          .catch(() => {});
-        setIsShareModalOpen(true);
-        return;
-      }
-    } catch {}
-
     setIsShareModalOpen(true);
   };
 
@@ -147,11 +110,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const submissionType = project.submission_type || project.submissionType || (project.official_group_id ? 'group' : 'individual');
   const isIndividual = submissionType === 'individual';
 
-  const liveDemo = project.live_demo_url || project.links?.website;
-  const repo = project.repo_url || project.links?.repository;
-  const documentation = project.documentation_url || project.links?.documentation;
-  const video = project.video_url || project.links?.video;
-  const presentation = project.presentation_url || project.presentationUrl || project.links?.presentation;
+
   // Resolve clean branch/department code (e.g. 'CSE', 'ECE', 'MECH', 'CIVIL', 'EEE', 'AI & ML', 'IT')
   // Eliminates the generic fallback word "Engineering"
   const resolveDeptBadge = () => {
@@ -164,18 +123,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       return rawCode.toUpperCase();
     }
 
-    // 2. Match department_id against kitsCollegeConfig departments
+    const deptList = departments && departments.length > 0 ? departments : kitsCollegeConfig.departments;
+
+    // 2. Match department_id against departments
     if (rawId && rawId !== 'engineering') {
-      const match = kitsCollegeConfig.departments.find(
-        d => d.id.toLowerCase() === rawId || d.code.toLowerCase() === rawId
+      const match = deptList.find(
+        d => d.id.toLowerCase() === rawId.toLowerCase() || d.code.toLowerCase() === rawId.toLowerCase()
       );
       if (match) return match.code;
       return rawId.toUpperCase();
     }
 
-    // 3. Match departmentName against kitsCollegeConfig departments
+    // 3. Match departmentName against departments
     if (rawName && rawName.toLowerCase() !== 'engineering') {
-      const match = kitsCollegeConfig.departments.find(
+      const match = deptList.find(
         d => d.name.toLowerCase() === rawName.toLowerCase() || d.shortName.toLowerCase() === rawName.toLowerCase()
       );
       if (match) return match.code;
@@ -192,7 +153,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const projectType = project.projectType || project.project_type || (isIndividual ? 'Individual Project' : 'Major Capstone Project');
 
   const rawThumb = project.thumbnail || (project.images && project.images[0]) || (project.screenshots && project.screenshots[0]) || '';
-  const hasCustomImage = rawThumb && !rawThumb.includes('photo-1581092160607') && !rawThumb.includes('photo-1518770660439');
+  const hasCustomImage = rawThumb && !rawThumb.includes('photo-1581092160607') && !rawThumb.includes('photo-151877066043');
 
   const getClassificationBadgeStyle = () => {
     if (isIndividual) {
@@ -210,9 +171,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       role="article"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
-      className={`kits-card group flex flex-col justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-[#CA0765] bg-white transition-all hover:shadow-md relative ${
-        isHighlighted ? 'ring-3 ring-[#CA0765] shadow-xl scale-[1.01]' : ''
-      }`}
+      className={`kits-card group flex flex-col justify-between cursor-pointer focus-visible:ring-2 focus-visible:ring-[#CA0765] bg-white transition-all hover:shadow-md relative ${isHighlighted ? 'ring-3 ring-[#CA0765] shadow-xl scale-[1.01]' : ''
+        }`}
     >
       {/* Signature Cyan Corner Accents */}
       <span className="kits-cyan-corner-tl" />
@@ -228,11 +188,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             disabled={isSaving}
             aria-label={isSaved ? `Saved in Wishlist: ${project.title}` : `Save ${project.title} to Wishlist`}
             title={isSaved ? "Saved in your Wishlist - Click to view" : "Save to Wishlist"}
-            className={`absolute top-2 right-2 z-20 px-2 py-1 rounded-[4px] backdrop-blur-xs transition-all flex items-center gap-1 text-[10.5px] font-bold shadow-md cursor-pointer ${
-              isSaved
+            className={`absolute top-2 right-2 z-20 px-2 py-1 rounded-[4px] backdrop-blur-xs transition-all flex items-center gap-1 text-[10.5px] font-bold shadow-md cursor-pointer ${isSaved
                 ? 'bg-[#CA0765] text-white border border-[#CA0765]'
                 : 'bg-black/60 hover:bg-black/85 text-white border border-white/20'
-            }`}
+              }`}
           >
             <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
             <span>{isSaved ? 'Saved' : 'Wishlist'}</span>
@@ -417,86 +376,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </span>
         </div>
 
-        {/* Resource Links Row */}
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 pt-2 border-t border-slate-100 text-xs">
-          {liveDemo && (
-            <a
-              href={liveDemo}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
-              title="Open Live Prototype Demo"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span>Demo</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          )}
-
-          {documentation && (
-            <a
-              href={documentation}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 font-semibold text-[#0070C2] hover:text-[#005696] hover:underline"
-              title="View Technical Documentation / Report"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Docs</span>
-              <ExternalLink className="w-2.5 h-2.5" />
-            </a>
-          )}
-
-          {video && (
-            <a
-              href={video}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 font-semibold text-purple-600 hover:text-purple-800 hover:underline"
-              title="Watch Demonstration Video"
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>Video</span>
-            </a>
-          )}
-
-          {presentation && (
-            <a
-              href={presentation}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 font-semibold text-[#D83B01] hover:text-[#B33000] hover:underline"
-              title="View PowerPoint Presentation / Slides"
-            >
-              <Presentation className="w-3.5 h-3.5" />
-              <span>PPT</span>
-            </a>
-          )}
-
-          {repo && (
-            <a
-              href={repo}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1 font-semibold text-[#19232B] hover:text-[#CA0765] hover:underline"
-              title="View Source Code Repository"
-            >
-              <Github className="w-3.5 h-3.5" />
-              <span>Code</span>
-            </a>
-          )}
-
-          {!liveDemo && !documentation && !video && !presentation && !repo && (
-            <span className="text-[11px] text-[#757F95] italic">Institutional Repository Record</span>
-          )}
-        </div>
-
-        {/* Dedicated "View Project" Button Row (Placed below resource links) */}
+        {/* Dedicated "View Project" Button Row */}
         <div className="pt-2.5 border-t border-slate-100">
           <button
             type="button"
@@ -514,6 +394,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         onClose={() => setIsShareModalOpen(false)}
         project={project}
         onShareRecorded={(newCount) => setSharesCount(newCount)}
+        onNavigateSignIn={onNavigateSignIn}
       />
     </div>
   );

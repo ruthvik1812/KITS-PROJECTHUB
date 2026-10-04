@@ -21,7 +21,8 @@ router.get('/', authenticate, (req: Request, res: Response) => {
     const items = getUserWishlist(userId);
     res.json({ success: true, count: items.length, items });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Failed to retrieve wishlist.' });
+    console.error('Error retrieving wishlist:', error);
+    res.status(500).json({ error: 'Failed to retrieve wishlist. Please try again later.' });
   }
 });
 
@@ -37,7 +38,8 @@ router.get('/ids', authenticate, (req: Request, res: Response) => {
     const projectIds = getWishlistProjectIds(userId);
     res.json({ success: true, projectIds });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Failed to retrieve wishlist IDs.' });
+    console.error('Error retrieving wishlist IDs:', error);
+    res.status(500).json({ error: 'Failed to retrieve wishlist bookmarks. Please try again later.' });
   }
 });
 
@@ -60,8 +62,14 @@ router.post('/:projectId', authenticate, (req: Request, res: Response) => {
     const result = addToWishlist(userId, projectId);
     res.json(result);
   } catch (error: any) {
-    const status = error.message?.includes('not found') ? 404 : 400;
-    res.status(status).json({ error: error.message || 'Failed to add project to wishlist.' });
+    console.error('Error adding to wishlist:', error);
+    if (error?.message?.includes('not found')) {
+      res.status(404).json({ error: 'Project not found.' });
+    } else if (error?.message?.includes('approved')) {
+      res.status(400).json({ error: 'Only approved, published projects can be saved to your wishlist.' });
+    } else {
+      res.status(400).json({ error: 'Failed to add project to wishlist. Please try again.' });
+    }
   }
 });
 
@@ -84,7 +92,8 @@ router.delete('/:projectId', authenticate, (req: Request, res: Response) => {
     const result = removeFromWishlist(userId, projectId);
     res.json(result);
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Failed to remove project from wishlist.' });
+    console.error('Error removing from wishlist:', error);
+    res.status(500).json({ error: 'Failed to remove project from wishlist. Please try again later.' });
   }
 });
 

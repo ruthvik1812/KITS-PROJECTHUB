@@ -156,7 +156,7 @@ function AppContent() {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 right-6 z-50 bg-[#19232B] text-white p-4 rounded-[4px] border-l-4 border-[#CA0765] shadow-2xl space-y-2.5 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-md"
+          className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 bg-[#19232B] text-white p-4 rounded-[4px] border-l-4 border-[#CA0765] shadow-2xl space-y-2.5 animate-in fade-in slide-in-from-bottom-5 duration-300 max-w-md"
         >
           <div className="flex items-start gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />

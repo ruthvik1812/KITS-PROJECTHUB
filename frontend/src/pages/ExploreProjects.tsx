@@ -37,7 +37,7 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
   onNavigateSignIn,
   onNavigateWishlist,
 }) => {
-  const { projects, refreshProjects } = useApp();
+  const { projects, refreshProjects, departments } = useApp();
   const { isAuthenticated } = useAuth();
 
   const handleCardSelect = (project: Project) => {
@@ -104,6 +104,121 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
     return Array.from(set).sort();
   }, [projects]);
 
+  // Dynamic available filter options derived from AppContext departments, database, and active project records
+  const availableDepartments = useMemo(() => {
+    const map = new Map<string, { id: string; code: string; name: string }>();
+
+    // 1. From AppContext departments (official database records)
+    (departments || []).forEach((d) => {
+      if (d && d.id) {
+        map.set(d.id.toLowerCase().trim(), {
+          id: d.id,
+          code: d.code || d.id.toUpperCase(),
+          name: d.name || d.id,
+        });
+      }
+    });
+
+    // 2. From actual project records
+    projects.forEach((p) => {
+      const dId = (p.departmentId || (p as any).department_id || '').toLowerCase().trim();
+      const dCode = p.departmentCode || (p as any).department_code || dId.toUpperCase();
+      const dName = p.departmentName || (p as any).department_name || dCode;
+      if (dId && !map.has(dId)) {
+        map.set(dId, { id: dId, code: dCode, name: dName });
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [departments, projects]);
+
+  const availableTechnologies = useMemo(() => {
+    const map = new Map<string, string>(); // lowerKey -> displayName
+
+    // Start with popular technology presets
+    kitsCollegeConfig.popularTechnologies.forEach((tech) => {
+      if (tech && tech.trim()) {
+        map.set(tech.toLowerCase().trim(), tech.trim());
+      }
+    });
+
+    // Aggregate from loaded project records (technologies and tools arrays)
+    projects.forEach((p) => {
+      const list = [
+        ...(Array.isArray(p.technologies) ? p.technologies : []),
+        ...(Array.isArray(p.tools) ? p.tools : []),
+      ];
+      list.forEach((t) => {
+        if (t && typeof t === 'string' && t.trim()) {
+          const key = t.toLowerCase().trim();
+          if (!map.has(key)) {
+            map.set(key, t.trim());
+          }
+        }
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+  }, [projects]);
+
+  const availableYears = useMemo(() => {
+    const set = new Set<string>();
+
+    // Config defaults
+    kitsCollegeConfig.graduationYears.forEach((yr) => set.add(String(yr)));
+
+    // Project records
+    projects.forEach((p) => {
+      if (p.graduationYear) set.add(String(p.graduationYear));
+      const acad = p.academicYear || p.academic_year;
+      if (acad) {
+        const matches = acad.match(/\d{4}/g);
+        if (matches) matches.forEach((m) => set.add(m));
+        set.add(acad);
+      }
+    });
+
+    // Sort 4-digit years descending
+    const numericYears = Array.from(set)
+      .filter((s) => /^\d{4}$/.test(s))
+      .sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+
+    return numericYears.length > 0 ? numericYears : ['2031', '2030', '2029', '2028', '2027'];
+  }, [projects]);
+
+  const availableTypes = useMemo(() => {
+    const map = new Map<string, string>();
+
+    // Default types
+    kitsCollegeConfig.projectTypes.forEach((pt) => {
+      if (pt && pt.trim()) map.set(pt.toLowerCase().trim(), pt.trim());
+    });
+
+    // Ensure standard institutional types are always selectable
+    map.set('individual project', 'Individual Project');
+    map.set('major capstone project', 'Major Capstone Project');
+
+    // Add any custom types from projects
+    projects.forEach((p) => {
+      const t = p.projectType || (p as any).project_type;
+      if (t && typeof t === 'string' && t.trim()) {
+        const key = t.toLowerCase().trim();
+        if (!map.has(key)) {
+          map.set(key, t.trim());
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [projects]);
+
+  const getSelectedDeptLabel = (idOrCode: string) => {
+    const found = availableDepartments.find(
+      (d) => d.id.toLowerCase() === idOrCode.toLowerCase() || d.code.toLowerCase() === idOrCode.toLowerCase()
+    );
+    return found ? found.code : idOrCode.toUpperCase();
+  };
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
@@ -136,73 +251,121 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
     setCurrentPage(1);
   }, [initialDepartment, initialSearch]);
 
-  // Filter Matching Catalogue
+  // Robust, Case-Insensitive Filter Matching Catalogue
   const filteredProjects = useMemo(() => {
     return projects
       .filter((p) => {
         // Only showcase approved projects in public explore
-        if (p.status !== 'approved') return false;
+        if (p.status && p.status !== 'approved') return false;
 
-        // Ownership (Individual vs Group) Filter
+        // 1. Ownership (Individual vs Group) Filter
         if (selectedOwnership) {
-          const type = (p.submissionType || p.submission_type || 'group').toLowerCase();
-          if (selectedOwnership === 'individual' && type !== 'individual') return false;
-          if (selectedOwnership === 'group' && type !== 'group') return false;
+          const subType = (p.submissionType || (p as any).submission_type || (p.official_group_id ? 'group' : 'individual')).toLowerCase();
+          const pType = (p.projectType || (p as any).project_type || '').toLowerCase();
+          const isInd = subType === 'individual' || pType.includes('individual');
+          if (selectedOwnership === 'individual' && !isInd) return false;
+          if (selectedOwnership === 'group' && isInd) return false;
         }
 
-        // Title Prefix / Keyword Search across catalogue
+        // 2. Title Prefix / Keyword Search across catalogue
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase().trim();
-          const matchTitle = p.title.toLowerCase().includes(q);
-          const matchSummary = p.summary.toLowerCase().includes(q);
-          const matchSubject = p.subject?.toLowerCase().includes(q);
-          const matchTech = p.technologies.some((t) => t.toLowerCase().includes(q));
-          const matchSkill = p.skills?.some((s) => s.toLowerCase().includes(q));
-          const matchAuthor = p.teamMembers.some(
-            (m) => m.name.toLowerCase().includes(q) || (m.rollNumber && m.rollNumber.toLowerCase().includes(q))
+          const matchTitle = (p.title || '').toLowerCase().includes(q);
+          const matchSummary = (p.summary || '').toLowerCase().includes(q);
+          const matchSubject = (p.subject || '').toLowerCase().includes(q);
+          const matchProblem = (p.problemStatement || (p as any).problem_statement || '').toLowerCase().includes(q);
+          const matchDept =
+            (p.departmentName || (p as any).department_name || '').toLowerCase().includes(q) ||
+            (p.departmentCode || (p as any).department_code || '').toLowerCase().includes(q) ||
+            (p.departmentId || (p as any).department_id || '').toLowerCase().includes(q);
+          const matchTech = [
+            ...(Array.isArray(p.technologies) ? p.technologies : []),
+            ...(Array.isArray(p.tools) ? p.tools : [])
+          ].some((t) => String(t).toLowerCase().includes(q));
+          const matchSkill = (Array.isArray(p.skills) ? p.skills : []).some((s) => String(s).toLowerCase().includes(q));
+          const matchAuthor = (Array.isArray(p.teamMembers) ? p.teamMembers : []).some(
+            (m) => (m.name && m.name.toLowerCase().includes(q)) || (m.rollNumber && m.rollNumber.toLowerCase().includes(q))
+          ) || (Array.isArray(p.original_authors) ? p.original_authors : []).some(
+            (a: any) => (a.name && a.name.toLowerCase().includes(q)) || (a.rollNumber && a.rollNumber.toLowerCase().includes(q))
           );
-          const matchMentor = p.mentor?.name ? p.mentor.name.toLowerCase().includes(q) : false;
-          if (!matchTitle && !matchSummary && !matchSubject && !matchTech && !matchSkill && !matchAuthor && !matchMentor) {
+          const matchMentor = p.mentor?.name
+            ? p.mentor.name.toLowerCase().includes(q)
+            : (p.faculty_mentor_name ? p.faculty_mentor_name.toLowerCase().includes(q) : false);
+
+          if (!matchTitle && !matchSummary && !matchSubject && !matchProblem && !matchDept && !matchTech && !matchSkill && !matchAuthor && !matchMentor) {
             return false;
           }
         }
 
-        // Department
-        if (selectedDept && p.departmentId !== selectedDept) return false;
+        // 3. Department Filter (Matches departmentId, code, or name)
+        if (selectedDept) {
+          const sDept = selectedDept.toLowerCase().trim();
+          const dId = (p.departmentId || (p as any).department_id || '').toLowerCase().trim();
+          const dCode = (p.departmentCode || (p as any).department_code || '').toLowerCase().trim();
+          const dName = (p.departmentName || (p as any).department_name || '').toLowerCase().trim();
+          const matchesDept =
+            dId === sDept ||
+            dCode === sDept ||
+            dName === sDept ||
+            dName.includes(sDept) ||
+            sDept.includes(dId) ||
+            sDept.includes(dCode);
+          if (!matchesDept) return false;
+        }
 
-        // Year
+        // 4. Graduation Year / Academic Year Filter
         if (selectedYear) {
-          const yrNum = parseInt(selectedYear, 10);
-          const matchesGrad = p.graduationYear === yrNum;
+          const sYearClean = selectedYear.replace(/[^\d-]/g, '').trim();
+          const yrNum = parseInt(sYearClean.split('-')[0], 10);
+          const gradYearStr = String(p.graduationYear || '');
+          const acadYearStr = String(p.academicYear || p.academic_year || '');
+          const matchesGrad = gradYearStr.includes(sYearClean) || (Boolean(yrNum) && p.graduationYear === yrNum);
           const matchesAcademic =
-            (typeof p.academic_year === 'string' && p.academic_year.includes(selectedYear)) ||
-            (typeof p.academicYear === 'string' && p.academicYear.includes(selectedYear));
+            acadYearStr.toLowerCase().includes(selectedYear.toLowerCase()) ||
+            (sYearClean.length >= 4 && acadYearStr.includes(sYearClean));
           if (!matchesGrad && !matchesAcademic) return false;
         }
 
-        // Subject Filter
-        if (selectedSubject && p.subject !== selectedSubject) return false;
-
-        // Difficulty Filter
-        if (selectedDifficulty && p.difficulty !== selectedDifficulty) return false;
-
-        // Skill Filter
-        if (
-          selectedSkill &&
-          !p.skills?.includes(selectedSkill) &&
-          !p.technologies?.includes(selectedSkill)
-        ) {
-          return false;
+        // 5. Technology Filter (Case-insensitive check across technologies & tools)
+        if (selectedTech) {
+          const sTech = selectedTech.toLowerCase().trim();
+          const techs = [
+            ...(Array.isArray(p.technologies) ? p.technologies : []),
+            ...(Array.isArray(p.tools) ? p.tools : [])
+          ].map((t) => String(t).toLowerCase().trim());
+          const matchesTech = techs.some((t) => t === sTech || t.includes(sTech) || sTech.includes(t));
+          if (!matchesTech) return false;
         }
 
-        // Technology
-        if (selectedTech && !p.technologies.includes(selectedTech)) return false;
-
-        // Project Classification / Type
+        // 6. Project Classification / Type Filter
         if (selectedType) {
-          const pType = (p.projectType || (p as any).project_type || '').toLowerCase();
-          const sType = selectedType.toLowerCase();
-          if (pType !== sType && !pType.includes(sType) && !sType.includes(pType)) {
+          const sType = selectedType.toLowerCase().trim();
+          const pType = (p.projectType || (p as any).project_type || '').toLowerCase().trim();
+          const subType = (p.submissionType || (p as any).submission_type || '').toLowerCase().trim();
+          const matchesType =
+            pType === sType ||
+            pType.includes(sType) ||
+            sType.includes(pType) ||
+            (sType.includes('individual') && (subType === 'individual' || pType.includes('individual'))) ||
+            (sType.includes('capstone') && (subType === 'group' || pType.includes('capstone') || pType.includes('major')));
+          if (!matchesType) return false;
+        }
+
+        // 7. Subject Filter
+        if (selectedSubject && p.subject !== selectedSubject) return false;
+
+        // 8. Difficulty Filter
+        if (selectedDifficulty && p.difficulty !== selectedDifficulty) return false;
+
+        // 9. Skill Filter
+        if (selectedSkill) {
+          const sSkill = selectedSkill.toLowerCase().trim();
+          const skillsList = [
+            ...(Array.isArray(p.skills) ? p.skills : []),
+            ...(Array.isArray(p.technologies) ? p.technologies : []),
+            ...(Array.isArray(p.tools) ? p.tools : [])
+          ].map((s) => String(s).toLowerCase().trim());
+          if (!skillsList.some((s) => s === sSkill || s.includes(sSkill))) {
             return false;
           }
         }
@@ -217,14 +380,14 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
           return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
         }
         if (sortBy === 'popular') {
-          return b.viewsCount + b.likesCount - (a.viewsCount + a.likesCount);
+          return (b.viewsCount + b.likesCount) - (a.viewsCount + a.likesCount);
         }
         if (sortBy === 'title') {
-          return a.title.localeCompare(b.title);
+          return (a.title || '').localeCompare(b.title || '');
         }
         return 0;
       });
-  }, [projects, searchQuery, selectedDept, selectedYear, selectedTech, selectedType, selectedOwnership, sortBy]);
+  }, [projects, searchQuery, selectedDept, selectedYear, selectedTech, selectedType, selectedOwnership, selectedSubject, selectedDifficulty, selectedSkill, sortBy]);
 
   // Paginated Slices
   const totalPages = Math.max(1, Math.ceil(filteredProjects.length / ITEMS_PER_PAGE));
@@ -249,6 +412,9 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
     setSelectedTech('');
     setSelectedType('');
     setSelectedOwnership('');
+    setSelectedSubject('');
+    setSelectedDifficulty('');
+    setSelectedSkill('');
     setSortBy('newest');
     setCurrentPage(1);
   };
@@ -370,15 +536,18 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
             {/* Department */}
             <div className="space-y-1.5">
               <label className="block text-[10px] font-semibold text-[#9FA6B3] uppercase tracking-widest">
-                Department ({kitsCollegeConfig.departments.length})
+                Department ({availableDepartments.length})
               </label>
               <select
                 value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDept(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full px-3 py-2 bg-white border border-[#E2E6ED] rounded-lg text-xs text-[#19232B] focus:outline-none focus:border-[#0070C2] focus:ring-1 focus:ring-[#0070C2]/20 transition appearance-none"
               >
                 <option value="">All Departments</option>
-                {kitsCollegeConfig.departments.map((dept) => (
+                {availableDepartments.map((dept) => (
                   <option key={dept.id} value={dept.id}>
                     {dept.code} – {dept.name}
                   </option>
@@ -393,12 +562,15 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </label>
               <select
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
+                onChange={(e) => {
+                  setSelectedYear(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full px-3 py-2 bg-white border border-[#E2E6ED] rounded-lg text-xs text-[#19232B] focus:outline-none focus:border-[#0070C2] focus:ring-1 focus:ring-[#0070C2]/20 transition appearance-none"
               >
                 <option value="">All Years</option>
-                {kitsCollegeConfig.graduationYears.map((yr) => (
-                  <option key={yr} value={yr.toString()}>
+                {availableYears.map((yr) => (
+                  <option key={yr} value={yr}>
                     Batch of {yr}
                   </option>
                 ))}
@@ -412,11 +584,14 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </label>
               <select
                 value={selectedTech}
-                onChange={(e) => setSelectedTech(e.target.value)}
+                onChange={(e) => {
+                  setSelectedTech(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full px-3 py-2 bg-white border border-[#E2E6ED] rounded-lg text-xs text-[#19232B] focus:outline-none focus:border-[#0070C2] focus:ring-1 focus:ring-[#0070C2]/20 transition appearance-none"
               >
                 <option value="">All Technologies</option>
-                {kitsCollegeConfig.popularTechnologies.map((t) => (
+                {availableTechnologies.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
@@ -429,12 +604,15 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </label>
               <select
                 value={selectedOwnership}
-                onChange={(e) => setSelectedOwnership(e.target.value as any)}
+                onChange={(e) => {
+                  setSelectedOwnership(e.target.value as any);
+                  setCurrentPage(1);
+                }}
                 className="w-full px-3 py-2 bg-white border border-[#E2E6ED] rounded-lg text-xs text-[#19232B] focus:outline-none focus:border-[#0070C2] focus:ring-1 focus:ring-[#0070C2]/20 transition appearance-none"
               >
                 <option value="">Individual & Group</option>
-                <option value="individual">Individual</option>
-                <option value="group">Group</option>
+                <option value="individual">Individual Projects</option>
+                <option value="group">Group Capstone Projects</option>
               </select>
             </div>
 
@@ -445,11 +623,14 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </label>
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
+                onChange={(e) => {
+                  setSelectedType(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full px-3 py-2 bg-white border border-[#E2E6ED] rounded-lg text-xs text-[#19232B] focus:outline-none focus:border-[#0070C2] focus:ring-1 focus:ring-[#0070C2]/20 transition appearance-none"
               >
                 <option value="">All Classifications</option>
-                {kitsCollegeConfig.projectTypes.map((pt) => (
+                {availableTypes.map((pt) => (
                   <option key={pt} value={pt}>{pt}</option>
                 ))}
               </select>
@@ -460,6 +641,100 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
 
           {/* MAIN CATALOGUE AREA (9 Cols) */}
           <main className="lg:col-span-9 space-y-6">
+            {/* Active Filters Pill Bar */}
+            {activeFiltersCount > 0 && (
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-white border border-[#E2E6ED] rounded-[4px] shadow-xs">
+                <span className="text-[11px] font-bold text-[#757F95] uppercase tracking-wider mr-1">
+                  Active Filters:
+                </span>
+
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-[#0070C2] text-xs font-semibold">
+                    <span>Search: "{searchQuery}"</span>
+                    <button
+                      onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove search filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedDept && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-[#CA0765] text-xs font-semibold">
+                    <span>Dept: {getSelectedDeptLabel(selectedDept)}</span>
+                    <button
+                      onClick={() => { setSelectedDept(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove department filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedYear && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                    <span>Batch: {selectedYear}</span>
+                    <button
+                      onClick={() => { setSelectedYear(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove year filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedTech && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs font-semibold">
+                    <span>Tech: {selectedTech}</span>
+                    <button
+                      onClick={() => { setSelectedTech(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove technology filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedOwnership && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                    <span>{selectedOwnership === 'individual' ? 'Individual' : 'Group Capstone'}</span>
+                    <button
+                      onClick={() => { setSelectedOwnership(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove ownership filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                {selectedType && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-200 text-purple-800 text-xs font-semibold">
+                    <span>Type: {selectedType}</span>
+                    <button
+                      onClick={() => { setSelectedType(''); setCurrentPage(1); }}
+                      className="hover:text-red-600 transition-colors"
+                      aria-label="Remove type filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  onClick={handleClearFilters}
+                  className="text-xs font-bold text-[#CA0765] hover:underline ml-auto"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+
             {/* Toolbar: Result Count & Sort Order */}
             <div className="bg-[#F6F6F7] border border-[#D5D5D5] rounded-[4px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="text-[#19232B] font-semibold">
@@ -511,7 +786,7 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </div>
             ) : isLoading ? (
               /* Loading Skeletons */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="kits-card animate-pulse space-y-4">
                     <div className="aspect-16/9 bg-slate-200 rounded-[2px]" />
@@ -523,7 +798,7 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               </div>
             ) : filteredProjects.length === 0 ? (
               /* Helpful No-Results State */
-              <div className="kits-card p-12 text-center space-y-4">
+              <div className="kits-card p-8 sm:p-12 text-center space-y-4">
                 <span className="kits-cyan-corner-tl" />
                 <span className="kits-cyan-corner-br" />
                 <div className="w-12 h-12 rounded-[4px] bg-slate-100 text-[#757F95] flex items-center justify-center mx-auto">
@@ -544,8 +819,8 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 </button>
               </div>
             ) : (
-              /* Cards Grid (3 Columns on desktop, 2 on tablet, 1 on mobile) */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              /* Cards Grid (3 Columns on wide desktop, 2 on laptop/tablet, 1 on mobile) */
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {paginatedProjects.map((project) => (
                   <ProjectCard
                     key={project.id}
@@ -560,19 +835,37 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="pt-6 border-t border-[#D5D5D5] flex items-center justify-between">
+              <div className="pt-6 border-t border-[#D5D5D5] flex items-center justify-between gap-2">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] border border-[#D5D5D5] bg-white text-[#19232B] hover:border-[#CA0765] disabled:opacity-40 text-xs font-bold transition-colors"
+                  className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-[4px] border border-[#D5D5D5] bg-white text-[#19232B] hover:border-[#CA0765] disabled:opacity-40 text-xs font-bold transition-colors shrink-0"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Previous</span>
+                  <span className="hidden xs:inline sm:inline">Previous</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 text-xs font-bold">
+                {/* Mobile page indicator */}
+                <div className="sm:hidden text-xs font-semibold text-[#757F95]">
+                  Page <span className="font-bold text-[#19232B]">{currentPage}</span> of {totalPages}
+                </div>
+
+                {/* Tablet / Desktop page numbered buttons with windowing */}
+                <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold">
                   {Array.from({ length: totalPages }).map((_, i) => {
                     const pageNum = i + 1;
+                    // For more than 7 pages, only show first, last, and window around current
+                    if (
+                      totalPages > 7 &&
+                      pageNum !== 1 &&
+                      pageNum !== totalPages &&
+                      Math.abs(pageNum - currentPage) > 1
+                    ) {
+                      if (pageNum === 2 || pageNum === totalPages - 1) {
+                        return <span key={pageNum} className="text-[#757F95] px-1">...</span>;
+                      }
+                      return null;
+                    }
                     return (
                       <button
                         key={pageNum}
@@ -592,9 +885,9 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] border border-[#D5D5D5] bg-white text-[#19232B] hover:border-[#CA0765] disabled:opacity-40 text-xs font-bold transition-colors"
+                  className="inline-flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-[4px] border border-[#D5D5D5] bg-white text-[#19232B] hover:border-[#CA0765] disabled:opacity-40 text-xs font-bold transition-colors shrink-0"
                 >
-                  <span>Next</span>
+                  <span className="hidden xs:inline sm:inline">Next</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -627,15 +920,18 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
               {/* Department */}
               <div>
                 <label className="block text-xs font-bold text-[#19232B] uppercase mb-1">
-                  Department
+                  Department ({availableDepartments.length})
                 </label>
                 <select
                   value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDept(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-[#D5D5D5] rounded-[4px] text-xs"
                 >
                   <option value="">All Departments</option>
-                  {kitsCollegeConfig.departments.map((d) => (
+                  {availableDepartments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.code} - {d.name}
                     </option>
@@ -650,12 +946,15 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 </label>
                 <select
                   value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-[#D5D5D5] rounded-[4px] text-xs"
                 >
                   <option value="">All Batches</option>
-                  {kitsCollegeConfig.graduationYears.map((yr) => (
-                    <option key={yr} value={yr.toString()}>
+                  {availableYears.map((yr) => (
+                    <option key={yr} value={yr}>
                       Batch of {yr}
                     </option>
                   ))}
@@ -669,11 +968,14 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 </label>
                 <select
                   value={selectedTech}
-                  onChange={(e) => setSelectedTech(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedTech(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-[#D5D5D5] rounded-[4px] text-xs"
                 >
                   <option value="">All Technologies</option>
-                  {kitsCollegeConfig.popularTechnologies.map((t) => (
+                  {availableTechnologies.map((t) => (
                     <option key={t} value={t}>
                       {t}
                     </option>
@@ -688,12 +990,15 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 </label>
                 <select
                   value={selectedOwnership}
-                  onChange={(e) => setSelectedOwnership(e.target.value as any)}
+                  onChange={(e) => {
+                    setSelectedOwnership(e.target.value as any);
+                    setCurrentPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-[#D5D5D5] rounded-[4px] text-xs"
                 >
                   <option value="">All Projects (Individual & Group)</option>
                   <option value="individual">Individual Projects</option>
-                  <option value="group">Group Projects</option>
+                  <option value="group">Group Capstone Projects</option>
                 </select>
               </div>
 
@@ -704,11 +1009,14 @@ export const ExploreProjects: React.FC<ExploreProjectsProps> = ({
                 </label>
                 <select
                   value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedType(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full px-3 py-2 border border-[#D5D5D5] rounded-[4px] text-xs"
                 >
                   <option value="">All Classifications</option>
-                  {kitsCollegeConfig.projectTypes.map((pt) => (
+                  {availableTypes.map((pt) => (
                     <option key={pt} value={pt}>
                       {pt}
                     </option>

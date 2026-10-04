@@ -65,7 +65,8 @@ router.get('/', (req: Request, res: Response) => {
 
     res.json({ averageRating: avg, totalRatings: count, myRating });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching ratings:', err);
+    res.status(500).json({ error: 'Failed to retrieve ratings. Please try again later.' });
   }
 });
 
@@ -106,7 +107,8 @@ router.post('/', authenticate, (req: Request, res: Response) => {
     const { avg, count } = recomputeAggregate(projectId);
     res.json({ message: 'Rating saved.', averageRating: avg, totalRatings: count, myRating: scoreInt });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error submitting rating:', err);
+    res.status(500).json({ error: 'Failed to save rating. Please try again later.' });
   }
 });
 
@@ -134,7 +136,8 @@ router.delete('/', authenticate, (req: Request, res: Response) => {
     const { avg, count } = recomputeAggregate(projectId);
     res.json({ message: 'Rating removed.', averageRating: avg, totalRatings: count, myRating: null });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error deleting rating:', err);
+    res.status(500).json({ error: 'Failed to remove rating. Please try again later.' });
   }
 });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AppContext';
+import { useAuth, useApp } from '../context/AppContext';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { ProjectCard } from '../components/ProjectCard';
 import {
@@ -60,6 +60,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
   onNavigateSignIn,
 }) => {
   const { currentUser, isAuthenticated } = useAuth();
+  const { departments } = useApp();
 
   const isEditing = Boolean(editingProject?.id);
 
@@ -147,12 +148,12 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
       : (Array.isArray(editingProject?.technologies) ? editingProject.technologies.join(', ') : '')
   );
 
-  const currentDept = kitsCollegeConfig.departments.find((d) => d.id === departmentId);
+  const currentDept = (departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).find((d) => d.id === departmentId);
   const [facultyMentorName, setFacultyMentorName] = useState(
     editingProject?.faculty_mentor_name || currentDept?.hodName || 'HOD'
   );
   const [facultyMentorRole, setFacultyMentorRole] = useState(
-    editingProject?.faculty_mentor_role || `Professor & HOD · ${currentDept?.code || 'CSE'}`
+    editingProject?.faculty_mentor_role || `Professor & HOD · ${currentDept?.code || ''}`
   );
 
   // Group and members state for Group Projects
@@ -787,7 +788,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
             </div>
 
             {/* Subject/Category, Department, Batch */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-[#19232B] uppercase">
                   Subject / Category *
@@ -811,7 +812,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   onChange={(e) => setDepartmentId(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] bg-white focus:outline-none focus:border-[#CA0765]"
                 >
-                  {kitsCollegeConfig.departments.map((dept) => (
+                  {(departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.code} — {dept.name}
                     </option>
@@ -1253,13 +1254,15 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                 <label className="text-xs font-bold text-[#19232B] uppercase flex items-center gap-1.5">
                   <Presentation className="w-3.5 h-3.5 text-[#D83B01]" />
                   <span>PowerPoint Link</span>
-                  {submissionType === 'group' && (
+                  {submissionType === 'group' ? (
                     <span className="text-[10px] text-[#D83B01] font-bold">★ Group</span>
+                  ) : (
+                    <span className="text-[10px] text-[#757F95] font-normal normal-case">(Optional)</span>
                   )}
                 </label>
                 <input
                   type="url"
-                  placeholder="https://docs.google.com/presentation/..."
+                  placeholder={submissionType === 'individual' ? "Optional: https://docs.google.com/presentation/..." : "https://docs.google.com/presentation/..."}
                   value={presentationUrl}
                   onChange={(e) => setPresentationUrl(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-[#D5D5D5] rounded-[4px] focus:outline-none focus:border-[#D83B01]"
@@ -1280,16 +1283,20 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                       <Presentation className="w-4 h-4 text-[#D83B01]" />
                       <span>PowerPoint Presentation / Slides Link</span>
                     </label>
-                    {submissionType === 'group' && (
+                    {submissionType === 'group' ? (
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wide">
                         Group Viva &amp; Review Presentation
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 uppercase tracking-wide">
+                        Optional for Individual
                       </span>
                     )}
                   </div>
                   <p className="text-[11px] text-[#757F95] mt-0.5">
                     {submissionType === 'group'
                       ? 'Essential for Group Projects: Provide your group capstone presentation link (Google Slides, Microsoft PowerPoint Online, Canva, OneDrive) or upload your PPT/PPTX file for faculty review.'
-                      : 'Attach your project PowerPoint presentation (.pptx / .ppt), Google Slides, or Canva link.'}
+                      : 'Optional for Individual Projects: You can optionally attach your project PowerPoint presentation (.pptx / .ppt), Google Slides, or Canva link if available (not required).'}
                   </p>
                 </div>
 
@@ -1383,7 +1390,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                         <span>{isUploadingPpt ? 'Uploading presentation file...' : 'Click to Browse Presentation File or Drag & Drop'}</span>
                       </div>
                       <p className="text-[11px] text-[#757F95] mt-1">
-                        Supported formats: PPT, PPTX, PDF (Max size: 50MB)
+                        Supported formats: PPT, PPTX, PDF (Max size: 50MB) {submissionType === 'individual' && '— Optional'}
                       </p>
                     </label>
                   )}
@@ -1400,7 +1407,9 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                   <div className="relative">
                     <input
                       type="url"
-                      placeholder="e.g. https://docs.google.com/presentation/d/... or https://onedrive.live.com/... (Google Slides, Microsoft PowerPoint Online, OneDrive, Canva, SharePoint)"
+                      placeholder={submissionType === 'individual'
+                        ? "Optional: e.g. https://docs.google.com/presentation/d/... (leave blank if none)"
+                        : "e.g. https://docs.google.com/presentation/d/... or https://onedrive.live.com/... (Google Slides, Microsoft PowerPoint Online, OneDrive, Canva, SharePoint)"}
                       value={presentationUrl}
                       onChange={(e) => {
                         setPresentationUrl(e.target.value);
@@ -1433,12 +1442,25 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
             <div className="p-4 bg-slate-50/70 border border-[#D5D5D5] rounded-[4px] space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2E8F0] pb-2.5">
                 <div>
-                  <label className="text-xs font-bold text-[#19232B] uppercase flex items-center gap-1.5">
-                    <FileText className="w-4 h-4 text-[#0070C2]" />
-                    <span>Project Documentation / Technical Report</span>
-                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-[#19232B] uppercase flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#0070C2]" />
+                      <span>Project Documentation / Technical Report</span>
+                    </label>
+                    {submissionType === 'individual' ? (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-300 uppercase tracking-wide">
+                        Optional for Individual
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-900 border border-blue-300 uppercase tracking-wide">
+                        Recommended for Group
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-[#757F95] mt-0.5">
-                    Attach project report, design document or whitepaper via file upload or link
+                    {submissionType === 'individual'
+                      ? 'Optional for Individual Projects: You can optionally attach a project report, design document or whitepaper via file upload or web link (not required).'
+                      : 'Attach project report, design document or whitepaper via file upload or link.'}
                   </p>
                 </div>
 
@@ -1530,7 +1552,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                         <span>{isUploadingDoc ? 'Uploading document...' : 'Click to Browse File or Drag & Drop'}</span>
                       </div>
                       <p className="text-[11px] text-[#757F95] mt-1">
-                        Supported formats: PDF, DOC, DOCX (Max size: 20MB)
+                        Supported formats: PDF, DOC, DOCX (Max size: 20MB) {submissionType === 'individual' && '— Optional'}
                       </p>
                     </label>
                   )}
@@ -1546,7 +1568,9 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
                 <div className="space-y-2 pt-1">
                   <input
                     type="url"
-                    placeholder="e.g. https://drive.google.com/file/d/... or https://kitsts.ac.in/report.pdf"
+                    placeholder={submissionType === 'individual'
+                      ? "Optional: e.g. https://drive.google.com/file/d/... or https://kitsts.ac.in/report.pdf (leave blank if none)"
+                      : "e.g. https://drive.google.com/file/d/... or https://kitsts.ac.in/report.pdf"}
                     value={documentationUrl}
                     onChange={(e) => {
                       setDocumentationUrl(e.target.value);
@@ -1772,11 +1796,11 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#D5D5D5]">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-[#D5D5D5]">
             <button
               type="button"
               onClick={onCancel}
-              className="px-5 py-2.5 border border-[#D5D5D5] text-[#19232B] hover:bg-slate-50 text-xs font-bold uppercase rounded-[4px] transition-colors"
+              className="px-5 py-2.5 border border-[#D5D5D5] text-[#19232B] hover:bg-slate-50 text-xs font-bold uppercase rounded-[4px] transition-colors text-center"
             >
               Cancel
             </button>
@@ -1784,7 +1808,7 @@ export const SubmitProject: React.FC<SubmitProjectProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-3 bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider rounded-[4px] shadow-sm flex items-center gap-2 disabled:opacity-50 transition-all"
+              className="px-8 py-3 bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider rounded-[4px] shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 transition-all text-center"
             >
               {isSubmitting ? (
                 <>

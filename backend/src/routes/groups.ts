@@ -9,6 +9,7 @@ import {
   getGroupById,
   getGroupByUserId
 } from '../services/groupSqlService.js';
+import { sanitizeClientErrorMessage } from '../middleware/errorHandler.js';
 
 const router = Router();
 
@@ -37,7 +38,8 @@ router.post('/', authenticate, (req: Request, res: Response) => {
 
     res.status(201).json(group);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('Error creating group:', err);
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Failed to create group. Please check roll numbers and try again.') });
   }
 });
 
@@ -52,7 +54,8 @@ router.get('/my-group', authenticate, (req: Request, res: Response) => {
     const group = getGroupByUserId(user.id, user.student_roll_number || undefined);
     res.json(group || null);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching user group:', err);
+    res.status(500).json({ error: 'Failed to retrieve group information. Please try again later.' });
   }
 });
 
@@ -66,7 +69,8 @@ router.get('/pending-invites', authenticate, (req: Request, res: Response) => {
     const invites = getPendingInvitesByUserId(user.id);
     res.json({ invites });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching pending invites:', err);
+    res.status(500).json({ error: 'Failed to retrieve invitations. Please try again later.' });
   }
 });
 
@@ -83,7 +87,8 @@ router.get('/:id', (req: Request, res: Response) => {
     }
     res.json(group);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching group details:', err);
+    res.status(500).json({ error: 'Failed to retrieve group details. Please try again later.' });
   }
 });
 
@@ -105,7 +110,8 @@ router.post('/:id/invite', authenticate, (req: Request, res: Response) => {
     const updated = inviteMemberToGroup(req.params.id, user.id, studentRollNumber.trim());
     res.json(updated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('Error inviting member:', err);
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Failed to invite member. Please check student roll number.') });
   }
 });
 
@@ -120,7 +126,8 @@ router.post('/:id/accept', authenticate, (req: Request, res: Response) => {
     const updated = acceptGroupInvitation(req.params.id, user.id);
     res.json(updated);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('Error accepting invitation:', err);
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Failed to accept invitation. Please try again.') });
   }
 });
 
@@ -134,7 +141,8 @@ router.post('/:id/decline', authenticate, (req: Request, res: Response) => {
     const result = declineGroupInvitation(req.params.id, user.id);
     res.json(result);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('Error declining invitation:', err);
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Failed to decline invitation. Please try again.') });
   }
 });
 

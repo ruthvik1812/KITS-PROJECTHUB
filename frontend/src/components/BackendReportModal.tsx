@@ -57,10 +57,10 @@ export const BackendReportModal: React.FC = () => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-[#D5D5D5] px-6 bg-slate-50/70">
+        <div className="flex overflow-x-auto border-b border-[#D5D5D5] px-4 sm:px-6 bg-slate-50/70">
           <button
             onClick={() => setActiveTab('actions')}
-            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'actions'
                 ? 'border-[#CA0765] text-[#CA0765] bg-white'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -70,7 +70,7 @@ export const BackendReportModal: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('firestore')}
-            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'firestore'
                 ? 'border-[#CA0765] text-[#CA0765] bg-white'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -80,7 +80,7 @@ export const BackendReportModal: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('auth')}
-            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'auth'
                 ? 'border-[#CA0765] text-[#CA0765] bg-white'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -90,7 +90,7 @@ export const BackendReportModal: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('rules')}
-            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${
+            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all shrink-0 whitespace-nowrap ${
               activeTab === 'rules'
                 ? 'border-[#CA0765] text-[#CA0765] bg-white'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
@@ -101,7 +101,7 @@ export const BackendReportModal: React.FC = () => {
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-sm text-[#19232B]">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-sm text-[#19232B]">
           {activeTab === 'actions' && (
             <div className="space-y-6">
               <div className="p-4 rounded-[4px] bg-emerald-50 border border-emerald-300 flex items-start gap-3">
@@ -116,7 +116,7 @@ export const BackendReportModal: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border border-[#D5D5D5] rounded-[4px] overflow-hidden">
+              <div className="border border-[#D5D5D5] rounded-[4px] overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-[#D5D5D5]">

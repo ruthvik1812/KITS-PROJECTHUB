@@ -16,6 +16,7 @@ import authRoutes from './backend/src/routes/auth.js';
 import ratingsRoutes from './backend/src/routes/ratings.js';
 import commentsRoutes from './backend/src/routes/comments.js';
 import wishlistRoutes from './backend/src/routes/wishlist.js';
+import { errorHandler } from './backend/src/middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -83,6 +84,9 @@ app.use('/api/projects/:projectId/comments', commentsRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api', generalRoutes);
+app.all('/api/*', (_req, res) => {
+  res.status(404).json({ error: 'API endpoint not found.' });
+});
 
 // --- Frontend Integration (Vite Middleware in dev / Static files in prod) ---
 async function startServer() {
@@ -128,6 +132,9 @@ async function startServer() {
       }
     });
   }
+
+  // Global centralized error handler ensuring no raw errors or stack traces leak to client
+  app.use(errorHandler);
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✓ KITS ProjectHub running on http://0.0.0.0:${PORT}`);

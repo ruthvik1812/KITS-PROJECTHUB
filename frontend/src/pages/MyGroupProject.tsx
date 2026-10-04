@@ -536,11 +536,11 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
             </div>
 
             {/* Bootstrap Filter Buttons: All, Individual, Group with Accurate Counts */}
-            <div className="btn-group inline-flex rounded-[4px] p-1 bg-white border border-slate-300 shadow-2xs" role="group" aria-label="Project Type Filters">
+            <div className="btn-group inline-flex max-w-full overflow-x-auto shrink-0 rounded-[4px] p-1 bg-white border border-slate-300 shadow-2xs pb-0.5" role="group" aria-label="Project Type Filters">
               <button
                 type="button"
                 onClick={() => setProjectFilter('all')}
-                className={`px-4 py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 shrink-0 ${
                   projectFilter === 'all'
                     ? 'bg-[#19232B] text-white shadow-xs'
                     : 'text-[#757F95] hover:text-[#19232B] hover:bg-slate-50'
@@ -557,7 +557,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
               <button
                 type="button"
                 onClick={() => setProjectFilter('individual')}
-                className={`px-4 py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 shrink-0 ${
                   projectFilter === 'individual'
                     ? 'bg-[#0070C2] text-white shadow-xs'
                     : 'text-[#757F95] hover:text-[#0070C2] hover:bg-slate-50'
@@ -575,7 +575,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
               <button
                 type="button"
                 onClick={() => setProjectFilter('group')}
-                className={`px-4 py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold rounded-[3px] transition-all flex items-center gap-1.5 shrink-0 ${
                   projectFilter === 'group'
                     ? 'bg-[#CA0765] text-white shadow-xs'
                     : 'text-[#757F95] hover:text-[#CA0765] hover:bg-slate-50'
@@ -599,7 +599,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
               <p>Loading your project records from SQL database...</p>
             </div>
           ) : filteredProjects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredProjects.map((proj) => {
                 const isGroup = proj.submission_type === 'group';
                 const canEdit = isGroup
@@ -772,7 +772,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
                         try {
                           await acceptGroupInvitation(inv.group_id, currentUser.uid);
                           await loadDashboardData();
-                        } catch (e: any) { alert(e.message); }
+                        } catch (e: any) { alert(e?.message || 'Failed to accept invitation. Please try again.'); }
                       }}
                       className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-[4px] flex items-center gap-1"
                     >
@@ -784,7 +784,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
                         try {
                           await declineGroupInvitation(inv.group_id);
                           await loadDashboardData();
-                        } catch (e: any) { alert(e.message); }
+                        } catch (e: any) { alert(e?.message || 'Failed to decline invitation. Please try again.'); }
                       }}
                       className="px-4 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 text-xs font-bold rounded-[4px]"
                     >
@@ -1059,7 +1059,7 @@ export const MyGroupProject: React.FC<MyGroupProjectProps> = ({
                 </button>
               </div>
             ) : wishlistItems.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {wishlistItems.map((item) => {
                   const isNewlyHighlighted = Boolean(
                     highlightProjectId && (item.id === highlightProjectId || item.projectId === highlightProjectId)

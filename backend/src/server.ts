@@ -1,6 +1,11 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import session from 'express-session';
+import cookieParser from 'cookie-parser';
+import crypto from 'crypto';
 import { initDatabase } from './db/database.js';
 import projectRoutes from './routes/projects.js';
 import groupRoutes from './routes/groups.js';
@@ -9,7 +14,7 @@ import authRoutes from './routes/auth.js';
 import ratingsRoutes from './routes/ratings.js';
 import commentsRoutes from './routes/comments.js';
 import wishlistRoutes from './routes/wishlist.js';
-import crypto from 'crypto';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -39,11 +44,6 @@ app.use(
     credentials: true,
   })
 );
-
-import path from 'path';
-import fs from 'fs';
-import session from 'express-session';
-import cookieParser from 'cookie-parser';
 
 const uploadsDir = path.join(process.cwd(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -95,6 +95,14 @@ app.use('/api/projects/:projectId/comments', commentsRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api', generalRoutes);
+
+// Catch-all for undefined API endpoints
+app.all('/api/*', (_req, res) => {
+  res.status(404).json({ error: 'API endpoint not found.' });
+});
+
+// Centralized Express error handler (must be last middleware)
+app.use(errorHandler);
 
 // --- Start Server ---
 app.listen(PORT, () => {

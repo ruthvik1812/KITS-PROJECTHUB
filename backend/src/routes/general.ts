@@ -111,7 +111,8 @@ router.post(['/database/clear', '/admin/clear-database'], (_req: Request, res: R
       }
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Failed to clear database.' });
+    console.error('Database clear error:', error);
+    res.status(500).json({ error: 'Failed to clear database. Please try again later.' });
   }
 });
 

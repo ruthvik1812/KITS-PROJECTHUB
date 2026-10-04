@@ -327,7 +327,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate, onNavigateWi
                     autoComplete="username"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="name@kitsts.ac.in"
+                    placeholder=""
                     className="flex-1 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
                   />
                 </div>
@@ -442,7 +442,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate, onNavigateWi
                     autoComplete="email"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="student.name@kitsts.ac.in"
+                    placeholder=""
                     className="flex-1 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
                   />
                 </div>
@@ -464,7 +464,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate, onNavigateWi
                     autoComplete="name"
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
-                    placeholder="e.g. A. Rahul"
+                    placeholder=""
                     className="w-full px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none bg-transparent"
                   />
                 </div>
@@ -507,7 +507,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({ onNavigate, onNavigateWi
                   required
                   value={regRollNumber}
                   onChange={(e) => setRegRollNumber(e.target.value.toUpperCase())}
-                  placeholder="e.g. 21B91A0501"
+                  placeholder=""
                   className="w-full px-3 py-2 text-xs font-mono font-semibold uppercase rounded-md border border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0d6efd] focus:border-[#0d6efd]"
                 />
               </div>

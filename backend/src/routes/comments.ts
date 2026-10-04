@@ -64,7 +64,8 @@ router.get('/', (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching comments:', err);
+    res.status(500).json({ error: 'Failed to retrieve comments. Please try again later.' });
   }
 });
 
@@ -104,7 +105,8 @@ router.post('/', authenticate, (req: Request, res: Response) => {
 
     res.status(201).json({ message: 'Comment posted.', comment: formatComment(row) });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error posting comment:', err);
+    res.status(500).json({ error: 'Failed to post comment. Please try again later.' });
   }
 });
 
@@ -148,7 +150,8 @@ router.put('/:commentId', authenticate, (req: Request, res: Response) => {
 
     res.json({ message: 'Comment updated.', comment: formatComment(row) });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error updating comment:', err);
+    res.status(500).json({ error: 'Failed to update comment. Please try again later.' });
   }
 });
 
@@ -174,7 +177,8 @@ router.delete('/:commentId', authenticate, (req: Request, res: Response) => {
     db.prepare(`DELETE FROM project_comments WHERE id = ?`).run(commentId);
     res.json({ message: 'Comment deleted.' });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('Error deleting comment:', err);
+    res.status(500).json({ error: 'Failed to delete comment. Please try again later.' });
   }
 });
 

@@ -12,6 +12,7 @@ import {
 } from '../services/userService.js';
 import { getGroupByUserId } from '../services/groupSqlService.js';
 import { db } from '../db/database.js';
+import { sanitizeClientErrorMessage } from '../middleware/errorHandler.js';
 
 const router = Router();
 
@@ -156,8 +157,9 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     });
   } catch (err: any) {
+    console.error('Registration error:', err);
     recordFailedAttempt(`reg_${ip}`);
-    res.status(400).json({ error: err.message || 'Registration failed.' });
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Registration failed. Please verify your details.') });
   }
 });
 
@@ -245,7 +247,8 @@ router.post('/setup-password', async (req: Request, res: Response) => {
       user: formatUserResponse(user),
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message || 'Failed to setup password.' });
+    console.error('Password setup error:', err);
+    res.status(400).json({ error: sanitizeClientErrorMessage(err, 'Failed to setup password. Please try again.') });
   }
 });
 
@@ -279,7 +282,8 @@ router.post(['/quick-login', '/dev-login'], async (req: Request, res: Response) 
       });
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Quick login failed.' });
+    console.error('Quick login error:', err);
+    res.status(500).json({ error: 'Quick login failed. Please try again later.' });
   }
 });
 
@@ -331,7 +335,8 @@ router.post('/verify-roll', authenticate, (req: Request, res: Response) => {
       user: formatUserResponse(updated),
     });
   } catch (error: any) {
-    res.status(400).json({ error: error.message || 'Verification failed.' });
+    console.error('Roll number verification error:', error);
+    res.status(400).json({ error: sanitizeClientErrorMessage(error, 'Verification failed. Please check your roll number.') });
   }
 });
 

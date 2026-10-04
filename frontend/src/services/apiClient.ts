@@ -147,7 +147,8 @@ export interface ProjectSearchParams {
   groupId?: string;
   ownerUserId?: string;
   page?: number;
-  limit?: number;
+  limit?: number | string;
+  unlimited?: boolean;
 }
 
 export async function fetchProjects(params?: ProjectSearchParams) {
@@ -163,7 +164,11 @@ export async function fetchProjects(params?: ProjectSearchParams) {
   if (params?.groupId) query.set('groupId', params.groupId);
   if (params?.ownerUserId) query.set('ownerUserId', params.ownerUserId);
   if (params?.page) query.set('page', params.page.toString());
-  if (params?.limit) query.set('limit', params.limit.toString());
+  if (params?.unlimited) {
+    query.set('limit', 'unlimited');
+  } else if (params?.limit !== undefined && params?.limit !== null) {
+    query.set('limit', params.limit.toString());
+  }
 
   const qs = query.toString();
   return request<{ projects: any[]; pagination: any }>(`/projects${qs ? `?${qs}` : ''}`);

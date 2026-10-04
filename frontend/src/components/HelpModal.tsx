@@ -21,10 +21,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         <span className="kits-cyan-corner-br" />
 
         {/* Header */}
-        <div className="bg-[#F6F6F7] border-b border-[#D5D5D5] px-6 py-4 flex items-center justify-between">
+        <div className="bg-[#F6F6F7] border-b border-[#D5D5D5] px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <HelpCircle className="w-5 h-5 text-[#0070C2]" />
-            <h2 className="font-heading font-bold text-xl text-[#19232B]">
+            <h2 className="font-heading font-bold text-lg sm:text-xl text-[#19232B]">
               KITS ProjectHub Help & FAQs
             </h2>
           </div>
@@ -38,7 +38,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#19232B] leading-relaxed">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-xs text-[#19232B] leading-relaxed">
           <div className="space-y-1">
             <div className="font-bold text-sm text-[#0070C2]">
               Q: Who can view projects on KITS ProjectHub?

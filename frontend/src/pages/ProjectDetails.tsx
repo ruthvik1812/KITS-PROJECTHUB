@@ -3,7 +3,6 @@ import { useAuth, useApp } from '../context/AppContext';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { RatingsAndComments } from '../components/RatingsAndComments';
 import { ShareModal } from '../components/ShareModal';
-import { recordProjectView, recordProjectShare } from '../services/apiClient';
 import {
   ArrowLeft,
   ExternalLink,
@@ -43,25 +42,33 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   onNavigateWishlist,
 }) => {
   const { currentUser, isAuthenticated } = useAuth();
-  const { isProjectSaved, saveToWishlist } = useApp();
+  const { isProjectSaved, saveToWishlist, recordView, departments } = useApp();
   const [viewsCount, setViewsCount] = useState<number>(project.views_count || project.viewsCount || 0);
   const [sharesCount, setSharesCount] = useState<number>(project.shares_count || project.sharesCount || 0);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSavingWishlist, setIsSavingWishlist] = useState(false);
   const isSaved = isProjectSaved(project.id);
 
-  // Automatically count view on successful published project details load (deduplicated 24h per viewer)
+  // Automatically count view on project details load 
   useEffect(() => {
     if (project?.id) {
-      recordProjectView(project.id)
-        .then((res) => {
-          if (typeof res?.views_count === 'number') {
-            setViewsCount(res.views_count);
+      recordView(project.id)
+        .then((newCount) => {
+          if (typeof newCount === 'number') {
+            setViewsCount(newCount);
           }
         })
         .catch(() => {});
     }
   }, [project?.id]);
+
+  useEffect(() => {
+    setViewsCount(project.views_count ?? project.viewsCount ?? 0);
+  }, [project.views_count, project.viewsCount]);
+
+  useEffect(() => {
+    setSharesCount(project.shares_count ?? project.sharesCount ?? 0);
+  }, [project.shares_count, project.sharesCount]);
 
   const handleWishlistClick = async () => {
     if (!isAuthenticated) {
@@ -92,46 +99,13 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     }
   };
 
-  const handleShareClick = async () => {
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/?project=${encodeURIComponent(project.id)}`
-      : '';
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: project.title,
-          text: project.summary || 'Check out this engineering capstone on KITS ProjectHub!',
-          url: shareUrl,
-        });
-        recordProjectShare(project.id, 'native')
-          .then((res) => {
-            if (typeof res?.shares_count === 'number') {
-              setSharesCount(res.shares_count);
-            }
-          })
-          .catch(() => {});
-        return;
-      } catch (err: any) {
-        if (err.name === 'AbortError') return;
+  const handleShareClick = () => {
+    if (!isAuthenticated) {
+      if (onNavigateSignIn) {
+        onNavigateSignIn();
       }
+      return;
     }
-
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        recordProjectShare(project.id, 'copy_link')
-          .then((res) => {
-            if (typeof res?.shares_count === 'number') {
-              setSharesCount(res.shares_count);
-            }
-          })
-          .catch(() => {});
-        setIsShareModalOpen(true);
-        return;
-      }
-    } catch {}
-
     setIsShareModalOpen(true);
   };
 
@@ -196,8 +170,10 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   const isUploadedDoc = Boolean(documentation && (documentation.startsWith('data:') || documentation.includes('/uploads/')));
   const isUploadedPpt = Boolean(presentation && (presentation.startsWith('data:') || presentation.includes('/uploads/')));
 
-  const currentDept = kitsCollegeConfig.departments.find(
-    (d) => d.id === project.department_id || d.code.toLowerCase() === (project.departmentCode || '').toLowerCase()
+  const currentDept = (departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).find(
+    (d) =>
+      d.id.toLowerCase() === (project.department_id || project.departmentId || '').toLowerCase() ||
+      d.code.toLowerCase() === (project.departmentCode || project.department_code || '').toLowerCase()
   );
   const hasFacultyMentor = !isIndividual && Boolean(project.faculty_mentor_name || project.mentor?.name);
   const mentorName = project.faculty_mentor_name || project.mentor?.name || (isIndividual ? '' : currentDept?.hodName || 'Dr. M. Ravindra Babu');
@@ -261,13 +237,13 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           </div>
 
           {/* Quick Actions Bar */}
-          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-white/15">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-4 border-t border-white/15">
             {liveDemo && (
               <a
                 href={liveDemo}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
               >
                 <Globe className="w-4 h-4" />
                 <span>Open Live Project Demo</span>
@@ -280,7 +256,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 href={repo}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase border border-white/20 transition-colors"
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[4px] bg-white/10 hover:bg-white/20 text-white text-xs font-bold uppercase border border-white/20 transition-colors"
               >
                 <Github className="w-4 h-4" />
                 <span>Source Code</span>
@@ -292,7 +268,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 href={video}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[4px] bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
               >
                 <Video className="w-4 h-4" />
                 <span>Demo Video</span>
@@ -306,7 +282,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 download={isUploadedDoc ? `${project.title ? project.title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'Project'}_Documentation.pdf` : undefined}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-[#0070C2] hover:bg-[#005696] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[4px] bg-[#0070C2] hover:bg-[#005696] text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
               >
                 {isUploadedDoc ? <Download className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
                 <span>{isUploadedDoc ? 'Download Documentation (PDF)' : 'Project Documentation'}</span>
@@ -317,7 +293,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
             {canEdit && onEditProject && (
               <button
                 onClick={() => onEditProject(project)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[4px] bg-white text-[#19232B] hover:bg-slate-100 text-xs font-bold uppercase shadow-sm transition-colors"
+                className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-[4px] bg-white text-[#19232B] hover:bg-slate-100 text-xs font-bold uppercase shadow-sm transition-colors"
               >
                 <Edit3 className="w-4 h-4 text-[#CA0765]" />
                 <span>Edit Project</span>
@@ -339,7 +315,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               disabled={isSavingWishlist}
               aria-label={isSaved ? "Saved in your Wishlist - Click to open Wishlist" : "Save this project to Wishlist"}
               title={isSaved ? "Saved in your Wishlist - Click to open Wishlist" : "Save to Wishlist"}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] text-xs font-bold transition-all shadow-sm cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-[4px] text-xs font-bold transition-all shadow-sm cursor-pointer ${
                 isSaved
                   ? 'bg-[#CA0765] hover:bg-[#A10550] text-white border border-[#CA0765]'
                   : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'
@@ -352,7 +328,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
             {/* Share Project Button */}
             <button
               onClick={handleShareClick}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[4px] bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-bold transition-colors ml-auto cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-[4px] bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-bold transition-colors sm:ml-auto cursor-pointer"
               title="Shares: Share actions and copied links; recipient delivery is not verified."
               aria-label={`Share ${project.title} (${sharesCount} shares)`}
             >
@@ -430,7 +406,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               <span className="kits-cyan-corner-tl" />
               <span className="kits-cyan-corner-br" />
 
-              <div className="border-b border-[#D5D5D5] pb-2 flex items-center justify-between">
+              <div className="border-b border-[#D5D5D5] pb-2 flex flex-col sm:flex-row sm:items-center justify-between items-start gap-2">
                 <div>
                   <h2 className="font-heading font-bold text-lg sm:text-xl text-[#19232B] flex items-center gap-2">
                     {isIndividual ? <User className="w-5 h-5 text-[#0070C2]" /> : <Users className="w-5 h-5 text-[#CA0765]" />}
@@ -441,7 +417,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </p>
                 </div>
 
-                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded border border-emerald-200">
+                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded border border-emerald-200 shrink-0">
                   {isIndividual ? 'Verified Author' : 'Verified Team'}
                 </span>
               </div>
@@ -517,7 +493,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           </div>
 
           {/* Sidebar Column */}
-          <div className="lg:col-span-4 space-y-6 sticky top-28">
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-28">
             {/* Technologies Card */}
             {tools.length > 0 && (
               <div className="kits-card p-5 bg-white space-y-3">
@@ -661,6 +637,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
         onClose={() => setIsShareModalOpen(false)}
         project={project}
         onShareRecorded={(newCount) => setSharesCount(newCount)}
+        onNavigateSignIn={onNavigateSignIn}
       />
     </div>
   );

@@ -47,7 +47,8 @@ router.post('/upload-doc', authenticate, (req: Request, res: Response) => {
     const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${savedFileName}`;
     res.json({ url: fileUrl, fileName: savedFileName });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('File upload processing error:', error);
+    res.status(500).json({ error: 'Failed to process and upload file. Please try again.' });
   }
 });
 
@@ -57,7 +58,8 @@ router.get('/departments', (_req: Request, res: Response) => {
     const departments = getDepartments();
     res.json(departments);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching departments:', error);
+    res.status(500).json({ error: 'Failed to retrieve academic departments. Please try again later.' });
   }
 });
 
@@ -67,7 +69,8 @@ router.get('/technologies', (_req: Request, res: Response) => {
     const technologies = getAllTechnologies();
     res.json(technologies);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching technologies:', error);
+    res.status(500).json({ error: 'Failed to retrieve technologies. Please try again later.' });
   }
 });
 
@@ -77,7 +80,8 @@ router.get('/batches', (_req: Request, res: Response) => {
     const batches = getAllBatches();
     res.json(batches);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching batches:', error);
+    res.status(500).json({ error: 'Failed to retrieve batches. Please try again later.' });
   }
 });
 
@@ -107,7 +111,8 @@ router.get('/my-projects', (req: Request, res: Response) => {
     const result = getMyProjects(userId || '', rollNumber, authUser?.role);
     res.json(result);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching user projects:', error);
+    res.status(500).json({ error: 'Failed to retrieve projects. Please try again later.' });
   }
 });
 
@@ -121,7 +126,8 @@ router.get('/by-group/:groupId', (req: Request, res: Response) => {
     }
     res.json(project);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching project by group ID:', error);
+    res.status(500).json({ error: 'Failed to retrieve group project. Please try again later.' });
   }
 });
 
@@ -146,6 +152,11 @@ router.get('/', (req: Request, res: Response) => {
       limit
     } = req.query;
 
+    const limitStr = limit ? String(limit).toLowerCase().trim() : '';
+    const isExplicitlyUnlimited = limitStr === 'all' || limitStr === 'unlimited' || limitStr === '0' || limitStr === '-1';
+    const limitNum = limit ? parseInt(limit as string, 10) : -1;
+    const isUnlimited = isExplicitlyUnlimited || !limit || limitNum <= 0;
+
     const result = getAllProjects({
       search: search as string,
       department: department as string,
@@ -160,12 +171,14 @@ router.get('/', (req: Request, res: Response) => {
       groupId: groupId as string,
       ownerUserId: ownerUserId as string,
       page: page ? parseInt(page as string, 10) : 1,
-      limit: limit ? parseInt(limit as string, 10) : 12,
+      limit: isUnlimited ? -1 : limitNum,
+      unlimited: isUnlimited,
     });
 
     res.json(result);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error querying projects:', error);
+    res.status(500).json({ error: 'Failed to retrieve projects. Please try again later.' });
   }
 });
 
@@ -179,7 +192,8 @@ router.get('/:id', (req: Request, res: Response) => {
     }
     res.json(project);
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error retrieving project details:', error);
+    res.status(500).json({ error: 'Failed to retrieve project details. Please try again later.' });
   }
 });
 
@@ -448,8 +462,8 @@ router.post('/', authenticate, (req: Request, res: Response) => {
         videoUrl ? videoUrl.trim() : null,
         presentationUrl ? presentationUrl.trim() : null,
         JSON.stringify(screenshotsArray),
-        isIndividual ? null : (facultyMentorName ? facultyMentorName.trim() : 'Dr. M. Ravindra Babu'),
-        isIndividual ? null : (facultyMentorRole ? facultyMentorRole.trim() : 'Professor & HOD · CSE'),
+        isIndividual ? null : (facultyMentorName ? facultyMentorName.trim() : ''),
+        isIndividual ? null : (facultyMentorRole ? facultyMentorRole.trim() : ''),
         hardwareEvidence ? JSON.stringify(hardwareEvidence) : null,
         JSON.stringify(outcomes || ['Completed functional engineering solution', 'Verified demonstration']),
         JSON.stringify(prerequisites || []),
@@ -473,7 +487,8 @@ router.post('/', authenticate, (req: Request, res: Response) => {
       project: createdProject
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error creating project:', error);
+    res.status(500).json({ error: 'Failed to publish project. Please verify inputs and try again.' });
   }
 });
 
@@ -653,7 +668,8 @@ router.put('/:id', authenticate, (req: Request, res: Response) => {
       project: updated
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error updating project:', error);
+    res.status(500).json({ error: 'Failed to update project. Please verify inputs and try again.' });
   }
 });
 
@@ -685,7 +701,8 @@ router.delete('/:id', authenticate, (req: Request, res: Response) => {
 
     res.json({ message: 'Project deleted successfully.', projectId: project.id });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('Error deleting project:', error);
+    res.status(500).json({ error: 'Failed to delete project. Please try again later.' });
   }
 });
 
@@ -703,8 +720,12 @@ router.post('/:id/view', (req: Request, res: Response) => {
       ...result
     });
   } catch (error: any) {
-    const status = error.message?.includes('not found') ? 404 : 500;
-    res.status(status).json({ error: error.message || 'Failed to record view.' });
+    console.error('Error recording project view:', error);
+    if (error?.message?.includes('not found')) {
+      res.status(404).json({ error: 'Project not found.' });
+    } else {
+      res.status(500).json({ error: 'Failed to record view. Please try again later.' });
+    }
   }
 });
 
@@ -724,8 +745,12 @@ router.post('/:id/share', (req: Request, res: Response) => {
       note: 'Share actions and copied links; recipient delivery is not verified.'
     });
   } catch (error: any) {
-    const status = error.message?.includes('not found') ? 404 : 500;
-    res.status(status).json({ error: error.message || 'Failed to record share.' });
+    console.error('Error recording project share:', error);
+    if (error?.message?.includes('not found')) {
+      res.status(404).json({ error: 'Project not found.' });
+    } else {
+      res.status(500).json({ error: 'Failed to record share. Please try again later.' });
+    }
   }
 });
 

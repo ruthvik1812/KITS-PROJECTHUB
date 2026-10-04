@@ -1,7 +1,7 @@
 import React from 'react';
 import { kitsCollegeConfig } from '../config/collegeConfig';
 import { KitsLogo } from './KitsLogo';
-import { useAuth } from '../context/AppContext';
+import { useAuth, useApp } from '../context/AppContext';
 import {
   GraduationCap,
   ArrowUp,
@@ -23,6 +23,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenHelp,
 }) => {
   const { isAuthenticated } = useAuth();
+  const { departments } = useApp();
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -64,7 +65,7 @@ export const Footer: React.FC<FooterProps> = ({
     <footer className="kits-footer-gradient text-white pt-14 pb-8 border-t-4 border-[#CA0765]">
       <div className="kits-container">
         {/* Four Columns Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 pb-12 border-b border-white/20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-12 border-b border-white/20">
           {/* Column 1: About ProjectHub */}
           <div className="space-y-4">
             <div className="flex flex-col gap-2">
@@ -90,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
               Departments
             </h4>
             <ul className="space-y-2 text-[13px] text-white/90">
-              {kitsCollegeConfig.departments.slice(0, 6).map((dept) => (
+              {(departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).slice(0, 6).map((dept) => (
                 <li key={dept.id}>
                   <button
                     onClick={() => handleDepartmentClick(dept.id)}
@@ -174,7 +175,7 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <a
-                  href="https://kitsts.ac.in/"
+                  href="https://www.kitss.edu.in/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline flex items-center gap-1.5 hover:text-white transition-colors"

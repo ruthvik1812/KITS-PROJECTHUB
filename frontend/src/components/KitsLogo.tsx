@@ -79,16 +79,16 @@ export const KitsLogo: React.FC<KitsLogoProps> = ({
         </div>
 
         <div
-          className={`font-sans font-semibold tracking-tight truncate ${
+          className={`font-sans font-semibold tracking-tight truncate max-w-[135px] sm:max-w-none ${
             isWhite ? 'text-white/90' : 'text-[#00457C]'
           } ${
             size === 'sm'
-              ? 'text-[9.5px] sm:text-[10px]'
+              ? 'text-[9px] sm:text-[10px]'
               : size === 'lg'
-              ? 'text-[14px] sm:text-[16px]'
+              ? 'text-[13px] sm:text-[16px]'
               : size === 'xl'
-              ? 'text-[16px] sm:text-[18px]'
-              : 'text-[11px] sm:text-[12.5px]'
+              ? 'text-[15px] sm:text-[18px]'
+              : 'text-[9.5px] sm:text-[12px]'
           }`}
         >
           Institute of Technology &amp; Science

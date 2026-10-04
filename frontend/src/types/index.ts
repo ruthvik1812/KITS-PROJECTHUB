@@ -188,6 +188,9 @@ export interface Project {
   methodology?: string;
   departmentId: string;
   departmentName: string;
+  departmentCode?: string;
+  department_code?: string;
+  department_id?: string;
   graduationYear: number;
   academicYear: string;
   academic_year?: string;
@@ -224,6 +227,9 @@ export interface Project {
   reviews?: ReviewFeedback[];
   featured?: boolean;
   viewsCount: number;
+  views_count?: number;
+  sharesCount?: number;
+  shares_count?: number;
   likesCount: number;
   isLiked?: boolean;
 

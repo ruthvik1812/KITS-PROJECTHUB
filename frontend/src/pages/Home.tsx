@@ -28,7 +28,7 @@ export const Home: React.FC<HomeProps> = ({
   onNavigate,
   onOpenGuidelines,
 }) => {
-  const { projects, refreshProjects } = useApp();
+  const { projects, refreshProjects, departments } = useApp();
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -135,17 +135,17 @@ export const Home: React.FC<HomeProps> = ({
             {/* Project Search Bar */}
             <form
               onSubmit={handleSearchSubmit}
-              className="relative max-w-xl flex items-center bg-white rounded-[4px] p-1.5 shadow-xl border border-white/20"
+              className="relative max-w-xl flex items-center bg-white rounded-[4px] p-1 sm:p-1.5 shadow-xl border border-white/20"
             >
-              <div className="pl-3 pr-2 text-[#757F95]">
-                <Search className="w-5 h-5" />
+              <div className="pl-2 sm:pl-3 pr-1.5 sm:pr-2 text-[#757F95]">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <input
                 type="text"
                 value={heroSearch}
                 onChange={(e) => setHeroSearch(e.target.value)}
-                placeholder="Search capstone title, student name, or technology..."
-                className="w-full py-2 text-sm text-[#19232B] placeholder-[#757F95] focus:outline-none"
+                placeholder="Search capstone title, student, tech..."
+                className="w-full py-2 text-xs sm:text-sm text-[#19232B] placeholder-[#757F95] focus:outline-none min-w-0"
                 aria-label="Search college projects"
               />
               {heroSearch && (
@@ -167,7 +167,7 @@ export const Home: React.FC<HomeProps> = ({
                   }
                 }}
                 disabled={isAuthenticated && !heroSearch.trim()}
-                className={`px-5 py-2.5 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all shrink-0 shadow-sm ${
+                className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all shrink-0 shadow-sm ${
                   isAuthenticated && !heroSearch.trim()
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/60'
                     : 'bg-[#CA0765] hover:bg-[#A10550] text-white cursor-pointer hover:shadow'
@@ -178,10 +178,10 @@ export const Home: React.FC<HomeProps> = ({
             </form>
 
             {/* Hero Main Project Actions */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
               <button
                 onClick={() => onNavigate('explore')}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-[#0070C2] hover:bg-[#005696] text-white text-[15px] font-semibold tracking-wide transition-all shadow-md focus-visible:ring-2 focus-visible:ring-white"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] bg-[#0070C2] hover:bg-[#005696] text-white text-[15px] font-semibold tracking-wide transition-all shadow-md focus-visible:ring-2 focus-visible:ring-white w-full sm:w-auto"
               >
                 <span>Explore Projects</span>
                 <ArrowRight className="w-4 h-4" />
@@ -195,7 +195,7 @@ export const Home: React.FC<HomeProps> = ({
                     onNavigate('submit');
                   }
                 }}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-white hover:bg-slate-100 text-[#19232B] border-2 border-white text-[15px] font-semibold tracking-wide transition-all shadow-md"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] bg-white hover:bg-slate-100 text-[#19232B] border-2 border-white text-[15px] font-semibold tracking-wide transition-all shadow-md w-full sm:w-auto"
               >
                 <PlusCircle className="w-4 h-4 text-[#CA0765]" />
                 <span>Submit Project</span>
@@ -300,7 +300,7 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* 3. Engineering Department Cards */}
       <section className="kits-container" aria-label="Academic Departments">
-        <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#D5D5D5]">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-8 pb-3 border-b border-[#D5D5D5]">
           <div>
             <div className="text-xs font-bold text-[#0070C2] uppercase tracking-wider mb-1">
               Academic Divisions
@@ -321,7 +321,7 @@ export const Home: React.FC<HomeProps> = ({
                 onNavigate('explore');
               }
             }}
-            className="text-xs font-bold text-[#0070C2] hover:text-[#005696] hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-[#0070C2] hover:text-[#005696] hover:underline flex items-center gap-1 self-start sm:self-auto shrink-0"
           >
             <span>Explore All</span>
             <ChevronRight className="w-4 h-4" />
@@ -330,8 +330,12 @@ export const Home: React.FC<HomeProps> = ({
 
         {/* Department Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {kitsCollegeConfig.departments.map((dept) => {
-            const count = approvedProjects.filter((p) => p.departmentId === dept.id).length;
+          {(departments && departments.length > 0 ? departments : kitsCollegeConfig.departments).map((dept) => {
+            const count = approvedProjects.filter(
+              (p) =>
+                (p.departmentId && p.departmentId.toLowerCase() === dept.id.toLowerCase()) ||
+                (p.departmentCode && p.departmentCode.toLowerCase() === dept.code.toLowerCase())
+            ).length;
             return (
               <div
                 key={dept.id}
@@ -390,11 +394,11 @@ export const Home: React.FC<HomeProps> = ({
 
       {/* 4. Compact How to Submit Section */}
       <section className="kits-container" aria-label="How to Submit Guidelines">
-        <div className="bg-[#F6F6F7] border-2 border-[#D5D5D5] rounded-[4px] p-8 sm:p-10 relative">
+        <div className="bg-[#F6F6F7] border-2 border-[#D5D5D5] rounded-[4px] p-5 sm:p-8 lg:p-10 relative">
           <span className="kits-cyan-corner-tl" />
           <span className="kits-cyan-corner-br" />
 
-          <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
             <span className="text-xs font-bold text-[#0070C2] uppercase tracking-wider">
               Student Capstone Workflow
             </span>
@@ -406,8 +410,8 @@ export const Home: React.FC<HomeProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="p-4 sm:p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
               <div className="w-8 h-8 rounded-[4px] bg-[#CA0765] text-white font-bold text-xs flex items-center justify-center mb-3">
                 01
               </div>
@@ -419,7 +423,7 @@ export const Home: React.FC<HomeProps> = ({
               </p>
             </div>
 
-            <div className="p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
+            <div className="p-4 sm:p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
               <div className="w-8 h-8 rounded-[4px] bg-[#0070C2] text-white font-bold text-xs flex items-center justify-center mb-3">
                 02
               </div>
@@ -431,7 +435,7 @@ export const Home: React.FC<HomeProps> = ({
               </p>
             </div>
 
-            <div className="p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
+            <div className="p-4 sm:p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
               <div className="w-8 h-8 rounded-[4px] bg-emerald-600 text-white font-bold text-xs flex items-center justify-center mb-3">
                 03
               </div>
@@ -443,7 +447,7 @@ export const Home: React.FC<HomeProps> = ({
               </p>
             </div>
 
-            <div className="p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
+            <div className="p-4 sm:p-5 bg-white border border-[#D5D5D5] rounded-[4px] relative">
               <div className="w-8 h-8 rounded-[4px] bg-[#03A9F5] text-white font-bold text-xs flex items-center justify-center mb-3">
                 04
               </div>
@@ -456,7 +460,7 @@ export const Home: React.FC<HomeProps> = ({
             </div>
           </div>
 
-          <div className="mt-8 text-center flex flex-wrap items-center justify-center gap-3">
+          <div className="mt-8 text-center flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => {
                 if (!isAuthenticated) {
@@ -465,7 +469,7 @@ export const Home: React.FC<HomeProps> = ({
                   onNavigate('submit');
                 }
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md focus-visible:ring-2 focus-visible:ring-[#0070C2]"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] bg-[#CA0765] hover:bg-[#A10550] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md focus-visible:ring-2 focus-visible:ring-[#0070C2] w-full sm:w-auto"
             >
               <span>Submit Project Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -474,7 +478,7 @@ export const Home: React.FC<HomeProps> = ({
             {onOpenGuidelines && (
               <button
                 onClick={onOpenGuidelines}
-                className="px-5 py-3 rounded-[4px] bg-white border border-[#D5D5D5] text-[#19232B] hover:border-[#CA0765] text-xs font-bold uppercase tracking-wider transition-colors"
+                className="inline-flex items-center justify-center px-5 py-3 rounded-[4px] bg-white border border-[#D5D5D5] text-[#19232B] hover:border-[#CA0765] text-xs font-bold uppercase tracking-wider transition-colors w-full sm:w-auto"
               >
                 View Detailed Guidelines
               </button>
